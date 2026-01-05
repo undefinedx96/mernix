@@ -30,7 +30,7 @@ importers:
         specifier: ^9.0.3
         version: 9.0.3
       mongoose:
-        specifier: ^9.0.2
+        specifier: ^9.1.1
         version: 9.1.1
       mongoose-aggregate-paginate-v2:
         specifier: ^1.1.4
