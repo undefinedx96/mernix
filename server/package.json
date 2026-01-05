@@ -5,7 +5,7 @@
   "private": "true",
   "main": "server.js",
   "scripts": {
-    "dev": "bun --watch src/server.js --host"
+    "dev": "node --watch src/server.js --host"
   },
   "keywords": [
     "mernix-server",
