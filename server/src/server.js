@@ -6,14 +6,16 @@ const PORT = conf.port || 3000;
 
 connectDB()
     .then(() => {
-        app.on('error', (error) => {
-            console.error(`APP ERROR: ${error}`);
-        })
+        const server = app.listen(PORT, () => {
+            console.log(`Server is running at http://127.0.0.1:${PORT}`);
+        });
 
-        app.listen(conf.port || PORT, () => {
-            console.log(`Server is running at http://127.0.0.1:${conf.port}`);
+        server.on('error', (err) => {
+            console.error('SERVER ERROR: ', err);
+            process.exit(1);
         })
     })
     .catch((err) => {
         console.error(`MONGODB CONNECTION FAILED!!: ${err}`);
+        process.exit(1);
     });
