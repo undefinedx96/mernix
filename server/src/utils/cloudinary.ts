@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from 'cloudinary'
+import { v2 as cloudinary, type UploadApiResponse } from 'cloudinary'
 import conf from '../conf/conf.js'
 import fs from 'node:fs'
 
@@ -8,9 +8,9 @@ cloudinary.config({
     api_secret: conf.cloudinaryApiSecret
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (localFilePath: string): Promise<UploadApiResponse | null> => {
     try {
-        if (!localFilePath) return 'Could not find path of file';
+        if (!localFilePath) return null;
     
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: 'auto'
@@ -22,8 +22,8 @@ const uploadOnCloudinary = async (localFilePath) => {
     
         return response;
     }
-    catch (error) {
-        console.error('CLOUDINARY REJECTION ERROR: ', error.message);
+    catch (error: any) {
+        console.error('CLOUDINARY REJECTION ERROR: ', error.message || error);
 
         if (fs.existsSync(localFilePath)) {
             fs.unlinkSync(localFilePath);
@@ -33,12 +33,12 @@ const uploadOnCloudinary = async (localFilePath) => {
     }
 };
 
-const deleteFromCloudinary = async (publicId) => {
+const deleteFromCloudinary = async (publicId: string, resourceType: 'image' | 'video' = 'image'): Promise<any> => {
     try {
         if (!publicId) return null;
     
         const response = await cloudinary.uploader.destroy(publicId, {
-            resource_type: 'image'
+            resource_type: resourceType
         });
     
         if (response.result !== 'ok' && response.result !== 'not found') {
@@ -47,8 +47,8 @@ const deleteFromCloudinary = async (publicId) => {
     
         return response;
     }
-    catch (error) {
-        console.error('CLOUDINARY DELETION ERROR: ', error.message);
+    catch (error: any) {
+        console.error('CLOUDINARY DELETION ERROR: ', error.message || error);
         return null;
     }
 };
