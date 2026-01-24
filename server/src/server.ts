@@ -1,13 +1,13 @@
-import conf from "./conf/conf.js";
-import connectDB from "./db/index.js";
-import { app } from './app.js'
+import conf from "./conf/conf.ts";
+import connectDB from "./db/index.ts";
+import { app } from './app.ts'
 
 const PORT = conf.port || 3000;
 
 connectDB()
     .then(() => {
         const server = app.listen(PORT, () => {
-            console.log(`Server is running at http://127.0.0.1:${PORT}`);
+            console.log(`Bun server is running at http://127.0.0.1:${PORT}`);
         });
 
         server.on('error', (err) => {

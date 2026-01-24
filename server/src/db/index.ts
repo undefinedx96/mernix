@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
-import { DB_NAME } from '../constants.js';
-import conf from '../conf/conf.js';
+import { DB_NAME } from '../constants.ts';
+import conf from '../conf/conf.ts';
 
-const connectDB = async () => {
+const connectDB = async ():Promise<void> => {
     try {
         const connectionInstance = await mongoose.connect(`${conf.mongoDBUri}/${DB_NAME}`);
         console.log(`MongoDB connected! DB Host: ${connectionInstance.connection.host}`);
