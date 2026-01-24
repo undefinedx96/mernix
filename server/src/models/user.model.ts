@@ -1,19 +1,44 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Document, Schema } from 'mongoose'
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
+import jwt, { type Secret } from 'jsonwebtoken'
 import conf from '../conf/conf.js'
 
-const userSchema = new Schema(
+export interface IUser extends Document {
+    firstName: string;
+    lastName: string;
+    email: string;
+    username: string;
+    avatar: string;
+    avatarPublicId?: string;
+    coverImage?: string;
+    coverImagePublicId?: string;
+    watchHistory: mongoose.Types.ObjectId[];
+    password: string;
+    refreshToken?: string;
+    createdAt: Date;
+    updatedAt: Date;
+    isPasswordCorrect(password: string): Promise<boolean>;
+    generateAccessToken(): string;
+    generateRefreshToken(): string;
+}
+
+const userSchema = new Schema<IUser>(
     {
-        fullName: {
+        firstName: {
             type: String,
-            required: [true, 'Full name is required'],
+            required: [true, 'First name is required'],
+            trim: true,
+            index: true
+        },
+        lastName: {
+            type: String,
+            required: [true, 'Last name is required'],
             trim: true,
             index: true
         },
         email: {
             type: String,
-            required: [[true, 'Email is required']],
+            required: [true, 'Email is required'],
             unique: true,
             lowercase: true,
             trim: true
@@ -58,44 +83,45 @@ const userSchema = new Schema(
     }
 );
 
-userSchema.pre('save', async function () {
+userSchema.pre<IUser>('save', async function () {
     if (!this.isModified('password')) return;
 
     this.password = await bcrypt.hash(this.password, 10);
 });
 
-userSchema.methods.isPasswordCorrect = async function (password) {
+userSchema.methods.isPasswordCorrect = async function (this: IUser, password: string): Promise<boolean> {
     return await bcrypt.compare(password, this.password);
 }
 
-userSchema.methods.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = function (this: IUser): string {
     return jwt.sign(
         {
             _id: this._id,
             email: this.email,
             username: this.username,
-            fullName: this.fullName
+            firstName: this.firstName,
+            lastName: this.lastName
         },
-        conf.accessTokenSecret,
+        conf.accessTokenSecret as Secret,
         {
-            expiresIn: conf.accessTokenExpiry
+            expiresIn: conf.accessTokenExpiry as any
         }
     )
 }
 
-userSchema.methods.generateRefreshToken = function () {
+userSchema.methods.generateRefreshToken = function (this: IUser): string {
     return jwt.sign(
         {
             _id: this._id
         },
-        conf.refreshTokenSecret,
+        conf.refreshTokenSecret as Secret,
         {
-            expiresIn: conf.refreshTokenExpiry
+            expiresIn: conf.refreshTokenExpiry as any
         }
     )
 }
 
-export const User = mongoose.model('User', userSchema);
+export const User = mongoose.model<IUser>('User', userSchema);
 
 
 
