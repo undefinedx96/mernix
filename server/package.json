@@ -17,7 +17,6 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/mongoose": "^5.11.97",
     "@types/mongoose-aggregate-paginate-v2": "^1.1.2",
     "@types/multer": "^2.0.0",
     "@types/node": "^25.0.10",

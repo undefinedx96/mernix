@@ -22,7 +22,6 @@
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/jsonwebtoken": "^9.0.10",
-        "@types/mongoose": "^5.11.97",
         "@types/mongoose-aggregate-paginate-v2": "^1.1.2",
         "@types/multer": "^2.0.0",
         "@types/node": "^25.0.10",
@@ -30,7 +29,7 @@
         "prettier": "^3.8.1",
       },
       "peerDependencies": {
-        "typescript": "^5",
+        "typescript": "^5.9.3",
       },
     },
   },
@@ -56,8 +55,6 @@
     "@types/http-errors": ["@types/http-errors@2.0.5", "", {}, "sha512-r8Tayk8HJnX0FztbZN7oVqGccWgw98T/0neJphO91KkmOzug1KkofZURD4UaD5uH8AqcFLfdPErnBod0u71/qg=="],
 
     "@types/jsonwebtoken": ["@types/jsonwebtoken@9.0.10", "", { "dependencies": { "@types/ms": "*", "@types/node": "*" } }, "sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA=="],
-
-    "@types/mongoose": ["@types/mongoose@5.11.97", "", { "dependencies": { "mongoose": "*" } }, "sha512-cqwOVYT3qXyLiGw7ueU2kX9noE8DPGRY6z8eUxudhXY8NZ7DMKYAxyZkLSevGfhCX3dO/AoX5/SO9lAzfjon0Q=="],
 
     "@types/mongoose-aggregate-paginate-v2": ["@types/mongoose-aggregate-paginate-v2@1.1.2", "", { "dependencies": { "mongoose-aggregate-paginate-v2": "*" } }, "sha512-kniYSe91bCZWV13ARP00/a9upIa8NfAqkHNTCza/sOqQ4lh1Q6/Ji6z4ADjMDswDHb0E0TiSN/adTHT0MHOyFQ=="],
 
