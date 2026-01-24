@@ -1,13 +1,18 @@
+interface ValidationError {
+    field?: string;
+    message: string;
+}
+
 class ApiError extends Error {
     public statusCode: number;
-    public data: any;
+    public data: null;
     public success: boolean;
-    public errors: any[]
+    public errors: ValidationError[]
 
     constructor(
         statusCode: number,
         message: string = 'Something went wrong!',
-        errors: any[] = [],
+        errors: ValidationError[] = [],
         stack: string = ''
     ) {
         super(message);
