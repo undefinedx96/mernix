@@ -10,3 +10,15 @@ export interface Config {
     cloudinaryApiKey: string,
     cloudinaryApiSecret: string,
 }
+
+export interface TokenResponse {
+    accessToken: string;
+    refreshToken: string;
+}
+
+export interface LoginReqBody {
+    userIdentity?: string;
+    email?: string;
+    username?: string;
+    password: string;
+}
