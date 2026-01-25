@@ -1,32 +1,35 @@
-import { asyncHandler } from '../utils/asyncHandler.js'
-import { ApiError } from '../utils/ApiError.js'
-import { User } from '../models/user.model.js';
-import { uploadOnCloudinary } from '../utils/cloudinary.js'
-import { ApiResponse } from '../utils/ApiResponse.js'
+import { asyncHandler } from '../utils/asyncHandler.ts'
+import { ApiError } from '../utils/ApiError.ts'
+import { User } from '../models/user.model.ts';
+import { uploadOnCloudinary } from '../utils/cloudinary.ts'
+import { ApiResponse } from '../utils/ApiResponse.ts'
+import type { Request, Response } from 'express'
 
 
 
 
-const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password } = req.body;
-    // console.log(fullName, email, username, password);
-    // console.log(req.files);
-
-    if ([fullName, email, username, password].some(field => field?.trim() === '')) {
+const registerUser = asyncHandler(async (req: Request, res: Response) => {
+    const { firstName, lastName, email, username, password } = req.body;
+    console.log(firstName, lastName, email, username, password);
+    
+    if ([firstName, lastName, email, username, password].some(field => field?.trim() === '')) {
         throw new ApiError(400, 'All fields are required');
     }
-
+    
     const existingUser = await User.findOne({
         $or: [{ username }, { email }]
     });
-
+    
     if (existingUser) {
         throw new ApiError(409, 'User with this email or username already exists');
     }
+    
+    const files = req.files as {[fieldName: string]: Express.Multer.File[]};
+    // console.log(files);
 
-    const avatarLocalPath = req.files?.avatar?.[0]?.path;
+    const avatarLocalPath = files?.avatar?.[0]?.path;
 
-    const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+    const coverImageLocalPath = files?.coverImage?.[0]?.path;
 
     if (!avatarLocalPath) {
         throw new ApiError(400, 'Avatar file is required');
@@ -41,7 +44,8 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const createUser = await User.create({
-        fullName: fullName?.trim(),
+        firstName: firstName?.trim(),
+        lastName: lastName?.trim(),
         username: username?.toLowerCase().trim(),
         email: email?.trim(),
         avatar: avatar?.url,
