@@ -7,7 +7,7 @@ const PORT = conf.port || 3000;
 connectDB()
     .then(() => {
         const server = app.listen(PORT, () => {
-            console.log(`Bun server is running at http://127.0.0.1:${PORT}`);
+            console.log(`Server is running at http://127.0.0.1:${PORT}`);
         });
 
         server.on('error', (err) => {

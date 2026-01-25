@@ -1,4 +1,9 @@
 import type { Config } from '../types/types.ts'
+import dotenv from 'dotenv'
+
+dotenv.config({
+    path: './.env'
+});
 
 const conf: Config = {
     port: Number(process.env.PORT),

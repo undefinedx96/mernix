@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose'
 import bcrypt from 'bcrypt'
 import jwt, { type Secret } from 'jsonwebtoken'
-import conf from '../conf/conf.js'
+import conf from '../conf/conf.ts'
 
 export interface IUser extends Document {
     firstName: string;

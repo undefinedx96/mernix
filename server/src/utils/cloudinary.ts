@@ -1,5 +1,5 @@
 import { v2 as cloudinary, type UploadApiResponse } from 'cloudinary'
-import conf from '../conf/conf.js'
+import conf from '../conf/conf.ts'
 import fs from 'node:fs'
 
 cloudinary.config({
