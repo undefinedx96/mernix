@@ -179,14 +179,14 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 
 
 const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) => {
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.header('Authorization')?.replace('Bearer ', '').trim();
+    // console.log('Incoming refresh token: ', incomingRefreshToken);
+    
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, 'Unauthorized request');
+    }
+    
     try {
-        const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.header('Authorization')?.replace('Bearer ', '').trim();
-        // console.log('Incoming refresh token: ', incomingRefreshToken);
-    
-        if (!incomingRefreshToken) {
-            throw new ApiError(401, 'Unauthorized request');
-        }
-    
         const decodedToken = jwt.verify(incomingRefreshToken, conf.refreshTokenSecret) as jwt.JwtPayload;
         // console.log('Decoded token: ', decodedToken);
     
