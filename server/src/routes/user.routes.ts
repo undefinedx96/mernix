@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { upload } from '../middlewares/multer.middleware.ts'
-import { loginUser, logoutUser, refreshTheAccessToken, registerUser } from '../controllers/user.controller.ts'
+import { changeCurrentPassword, loginUser, logoutUser, refreshTheAccessToken, registerUser } from '../controllers/user.controller.ts'
 import { verifyJWT } from '../middlewares/auth.middleware.ts'
 
 const userRouter = Router();
@@ -21,5 +21,6 @@ userRouter.route('/register').post(
 userRouter.route('/login').post(loginUser);
 userRouter.route('/logout').post(verifyJWT, logoutUser);
 userRouter.route('/refresh-token').post(refreshTheAccessToken);
+userRouter.route('/change-current-password').post(verifyJWT, changeCurrentPassword);
 
 export default userRouter;
