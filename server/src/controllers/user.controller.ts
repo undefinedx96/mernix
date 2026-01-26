@@ -185,7 +185,7 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
     if (!incomingRefreshToken) {
         throw new ApiError(401, 'Unauthorized request');
     }
-    
+
     try {
         const decodedToken = jwt.verify(incomingRefreshToken, conf.refreshTokenSecret) as jwt.JwtPayload;
         // console.log('Decoded token: ', decodedToken);
@@ -223,9 +223,40 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
 });
 
 
+
+const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) => {
+    const { oldPassword, newPassword } = req.body;
+    // console.log('Old password', oldPassword);
+
+    const user = await User.findById(req.user?._id);
+
+    if (!user) {
+        throw new ApiError(400, 'User does not exist');
+    }
+
+    const isPasswordCorrect = await user?.isPasswordCorrect(oldPassword);
+    // console.log('Is password correct: ', isPasswordCorrect.valueOf());
+
+    if (!isPasswordCorrect) {
+        throw new ApiError(400, 'Invalid old password');
+    }
+
+    user.password = newPassword;
+    // console.log('New password: ', user.password, newPassword);
+    await user?.save({ validateBeforeSave: false });
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, {}, 'Password changed successfully')
+    );
+});
+
+
 export {
     registerUser,
     loginUser,
     logoutUser,
     refreshTheAccessToken,
+    changeCurrentPassword,
 }
