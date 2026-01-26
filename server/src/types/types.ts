@@ -23,6 +23,11 @@ export interface LoginReqBody {
     password: string;
 }
 
+export interface ChangeCurrentPasswordBody {
+    oldPassword: string;
+    newPassword: string;
+}
+
 export interface UpdateAccountDetailsBody {
     firstName: string;
     lastName: string;

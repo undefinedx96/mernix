@@ -4,7 +4,7 @@ import { User } from '../models/user.model.ts'
 import { uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { LoginReqBody, TokenResponse, UpdateAccountDetailsBody } from '../types/types.ts'
+import type { ChangeCurrentPasswordBody, LoginReqBody, TokenResponse, UpdateAccountDetailsBody } from '../types/types.ts'
 import { options } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
@@ -225,7 +225,7 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
 
 
 
-const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) => {
+const changeCurrentPassword = asyncHandler(async (req: Request<{}, {}, ChangeCurrentPasswordBody>, res: Response) => {
     const { oldPassword, newPassword } = req.body;
     // console.log('Old password', oldPassword);
 
