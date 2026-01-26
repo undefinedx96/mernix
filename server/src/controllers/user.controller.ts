@@ -38,7 +38,7 @@ const generateAccessAndRefreshTokens = async (userId: string): Promise<TokenResp
 
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
     const { firstName, lastName, email, username, password } = req.body;
-    console.log(firstName, lastName, email, username, password);
+    // console.log(firstName, lastName, email, username, password);
     
     if ([firstName, lastName, email, username, password].some(field => field?.trim() === '')) {
         throw new ApiError(400, 'All fields are required');
@@ -99,8 +99,8 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-const loginUser = asyncHandler(async (req: Request, res: Response) => {
-    const { userIdentity, email, username, password } = req.body as LoginReqBody;
+const loginUser = asyncHandler(async (req: Request<{}, {}, LoginReqBody>, res: Response) => {
+    const { userIdentity, email, username, password } = req.body;
 
     // console.log(`User identifier: ${userIdentity}, Email: ${email}, Username: ${username}, Password ${password}`);
 
