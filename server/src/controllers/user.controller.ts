@@ -205,7 +205,7 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
         return res
         .status(200)
         .cookie('accessToken', accessToken, options)
-        .cookie('refreshToken', newRefreshToken, options)
+        .cookie('refreshToken', newRefreshToken, {...options, maxAge: 7 * 24 * 60 * 60 * 1000})
         .json(
             new ApiResponse(
                 200,
