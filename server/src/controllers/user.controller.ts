@@ -4,7 +4,7 @@ import { User } from '../models/user.model.ts'
 import { uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { LoginReqBody, TokenResponse } from '../types/types.ts'
+import type { LoginReqBody, TokenResponse, UpdateAccountDetailsBody } from '../types/types.ts'
 import { options } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
@@ -224,6 +224,7 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
 
 
 
+
 const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
     // console.log('Old password', oldPassword);
@@ -264,6 +265,49 @@ const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
+
+
+const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAccountDetailsBody>, res: Response) => {
+    const { firstName, lastName, email } = req.body;
+
+    if (!firstName?.trim() || !lastName?.trim() || !email?.trim()) {
+        throw new ApiError(400, 'All fields are required and cannot be empty');
+    }
+
+    // check if email is already taken by different user
+    const existingUser = await User.findOne({ email: email?.toLowerCase() });
+
+    if (existingUser && existingUser?._id.toString() !== req.user?._id.toString()) {
+        throw new ApiError(409, 'User with this email already exists');
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                firstName: firstName?.trim(),
+                lastName: lastName?.trim(),
+                email: email?.trim().toLowerCase()
+            }
+        },
+        {
+            new: true,
+            // runValidators: true     // ensures schema rules (like minLength) are checked
+        }
+    ).select('-password -refreshToken');
+
+    if (!updatedUser) {
+        throw new ApiError(404, 'User does not exist');
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedUser, 'Account details updated successfully')
+    );
+});
+
+
 export {
     registerUser,
     loginUser,
@@ -271,4 +315,5 @@ export {
     refreshTheAccessToken,
     changeCurrentPassword,
     getCurrentUser,
+    updateAccountDetails,
 }

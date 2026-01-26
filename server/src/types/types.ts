@@ -22,3 +22,9 @@ export interface LoginReqBody {
     username?: string;
     password: string;
 }
+
+export interface UpdateAccountDetailsBody {
+    firstName: string;
+    lastName: string;
+    email: string;
+}
