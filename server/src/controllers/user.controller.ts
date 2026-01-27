@@ -1,7 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.ts'
 import { ApiError } from '../utils/ApiError.ts'
 import { User } from '../models/user.model.ts'
-import { uploadOnCloudinary } from '../utils/cloudinary.ts'
+import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
 import type { ChangeCurrentPasswordBody, LoginReqBody, TokenResponse, UpdateAccountDetailsBody } from '../types/types.ts'
@@ -308,6 +308,59 @@ const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAcco
 });
 
 
+
+
+const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
+    const avatarLocalPath = req.file?.path;
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, 'Avatar file is missing');
+    }
+
+    const user = await User.findById(req.user?._id);
+
+    if (!user) {
+        throw new ApiError(404, 'User does not exist');
+    }
+
+    const oldAvatarPublicId = user?.avatarPublicId;
+    // console.log('Old avatar pub id: ', oldAvatarPublicId);
+
+    const avatar = avatarLocalPath ? await uploadOnCloudinary(avatarLocalPath) : null;
+    // console.log('Avatar: ', avatar);
+
+    if (!avatar?.url) {
+        throw new ApiError(500, 'Error while uploading avatar to cloudinary');
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                avatar: avatar.url,
+                avatarPublicId: avatar.public_id
+            }
+        },
+        {
+            new: true
+        }
+    ).select('-password -refreshToken');
+
+    if (oldAvatarPublicId) {
+        await deleteFromCloudinary(oldAvatarPublicId);
+    }
+
+    // console.log('Updated user: ', updatedUser);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedUser, 'Avatar updated successfully')
+    );
+});
+
+
+
 export {
     registerUser,
     loginUser,
@@ -316,4 +369,5 @@ export {
     changeCurrentPassword,
     getCurrentUser,
     updateAccountDetails,
+    updateUserAvatar,
 }
