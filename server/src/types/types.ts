@@ -33,3 +33,7 @@ export interface UpdateAccountDetailsBody {
     lastName: string;
     email: string;
 }
+
+export type UserParams = {
+    username: string
+}

@@ -1,13 +1,14 @@
 import { asyncHandler } from '../utils/asyncHandler.ts'
 import { ApiError } from '../utils/ApiError.ts'
-import { User, type IUser } from '../models/user.model.ts'
+import { User } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { ChangeCurrentPasswordBody, LoginReqBody, TokenResponse, UpdateAccountDetailsBody } from '../types/types.ts'
+import type { ChangeCurrentPasswordBody, LoginReqBody, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
 import { options } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
+import mongoose from 'mongoose'
 
 
 
@@ -414,6 +415,85 @@ const updateUserCoverImage = asyncHandler(async (req: Request, res: Response) =>
 
 
 
+
+const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) => {
+    const { username } = req.params as UserParams;
+
+    if (!username?.trim()) {
+        throw new ApiError(400, 'Username is missing');
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: 'subscriptions',
+                localField: '_id',
+                foreignField: 'channel',
+                as: 'subscribers'
+            }
+        },
+        {
+            $lookup: {
+                from: 'subscriptions',
+                localField: '_id',
+                foreignField: 'subscriber',
+                as: 'subscribedTo'
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: '$subscribers'       // how many people follow THIS chanel
+                },
+                channelsSubscribedToCount: {
+                    $size: '$subscribedTo'      // how many channel THIS channel follows
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: {
+                            $in: [new mongoose.Types.ObjectId(req.user?._id), '$subscribers.subscriber']
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                firstName: 1,
+                lastName: 1,
+                username: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+            }
+        }
+    ]);
+
+    if (!channel.length) {
+        throw new ApiError(404, 'Channel does not exist');
+    }
+
+    // console.log('Channel: ', channel);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, channel[0], 'User channel fetched successfully')
+    );
+});
+
+
+
 export {
     registerUser,
     loginUser,
@@ -424,4 +504,5 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
+    getUserChannelProfile,
 }
