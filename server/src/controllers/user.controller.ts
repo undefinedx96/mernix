@@ -1,6 +1,6 @@
 import { asyncHandler } from '../utils/asyncHandler.ts'
 import { ApiError } from '../utils/ApiError.ts'
-import { User } from '../models/user.model.ts'
+import { User, type IUser } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
@@ -361,6 +361,59 @@ const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+
+const updateUserCoverImage = asyncHandler(async (req: Request, res: Response) => {
+    const coverImageLocalPath = req.file?.path;
+
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, 'Cover image file is missing');
+    }
+
+    const user = await User.findById(req.user?._id);
+
+    if (!user) {
+        throw new ApiError(404, 'User does not exist');
+    }
+
+    const oldCoverImagePublicId = user?.coverImagePublicId;
+    // console.log('Old cover pub id: ', oldCoverImagePublicId);
+
+    const coverImage = coverImageLocalPath ? await uploadOnCloudinary(coverImageLocalPath) : null;
+    // console.log('coverimage: ', coverImage);
+
+    if (!coverImage?.url) {
+        throw new ApiResponse(500, 'Error while uploading cover image to cloudinary');
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                coverImage: coverImage?.url,
+                coverImagePublicId: coverImage?.public_id
+            }
+        },
+        {
+            new: true
+        }
+    ).select('-password -refreshToken');
+
+    
+    if (oldCoverImagePublicId) {
+        await deleteFromCloudinary(oldCoverImagePublicId);
+    }
+
+    // console.log('updated user: ', updatedUser);
+    
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedUser, 'Cover image updated successfully')
+    );
+});
+
+
+
 export {
     registerUser,
     loginUser,
@@ -370,4 +423,5 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
+    updateUserCoverImage,
 }
