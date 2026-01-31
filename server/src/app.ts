@@ -21,7 +21,10 @@ app.use(cookieParser());
 
 
 
-import userRouter from './routes/user.routes.ts';
+import {
+    userRouter,
+} from './routes/index.ts'
+
 
 app.use('/api/v1/users', userRouter);
 
