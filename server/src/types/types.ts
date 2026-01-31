@@ -45,3 +45,8 @@ export interface UpdateAccountDetailsBody {
 export type UserParams = {
     username: string;
 }
+
+export interface PublishAVideoReqBody {
+    title: string;
+    description: string
+}
