@@ -23,9 +23,11 @@ app.use(cookieParser());
 
 import {
     userRouter,
+    videoRouter,
 } from './routes/index.ts'
 
 
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/videos', videoRouter);
 
 export { app }
