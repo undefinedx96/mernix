@@ -4,7 +4,7 @@ import { User } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { ChangeCurrentPasswordBody, LoginReqBody, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
+import type { ChangeCurrentPasswordBody, LoginReqBody, RegisterReqBody, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
 import { options } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
@@ -37,7 +37,7 @@ const generateAccessAndRefreshTokens = async (userId: string): Promise<TokenResp
 
 
 
-const registerUser = asyncHandler(async (req: Request, res: Response) => {
+const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, res: Response) => {
     const { firstName, lastName, email, username, password } = req.body;
     // console.log(firstName, lastName, email, username, password);
     

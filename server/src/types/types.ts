@@ -16,6 +16,14 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
+export interface RegisterReqBody {
+    firstName: string;
+    lastName: string;
+    email: string;
+    username: string;
+    password: string;
+}
+
 export interface LoginReqBody {
     userIdentity?: string;
     email?: string;
@@ -35,5 +43,5 @@ export interface UpdateAccountDetailsBody {
 }
 
 export type UserParams = {
-    username: string
+    username: string;
 }
