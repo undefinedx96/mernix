@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { verifyJWT } from '../middlewares/auth.middleware.ts'
 import { upload } from '../middlewares/multer.middleware.ts'
-import { publishAVideo } from '../controllers/video.controller.ts'
+import { getVideoById, publishAVideo } from '../controllers/video.controller.ts'
 
 const videoRouter = Router();
 
@@ -19,5 +19,6 @@ videoRouter.route('/publish-video').post(
     ]),
     publishAVideo
 );
+videoRouter.route('/get-video/:videoId').get(getVideoById);
 
 export default videoRouter;
