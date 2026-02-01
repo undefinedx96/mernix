@@ -7,6 +7,7 @@ import { Video } from '../models/video.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
 import mongoose, { isValidObjectId } from 'mongoose';
 import { User } from '../models/user.model.ts';
+import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts';
 
 
 
@@ -112,7 +113,7 @@ const getVideoById = asyncHandler(async (req: Request, res: Response) => {
 
     const currentUser: mongoose.Types.ObjectId | null = req.user?._id ? new mongoose.Types.ObjectId(req.user?._id) : null;
 
-    const video = await Video.aggregate([
+    const video = await Video.aggregate<VideoDetailDataResponseObj>([
         {
             $match: {
                 _id: new mongoose.Types.ObjectId(videoId)
@@ -130,7 +131,7 @@ const getVideoById = asyncHandler(async (req: Request, res: Response) => {
                             firstName: 1,
                             lastName: 1,
                             username: 1,
-                            email: 1,
+                            avatar: 1,
                         }
                     }
                 ]
