@@ -48,5 +48,9 @@ export type UserParams = {
 
 export interface PublishAVideoReqBody {
     title: string;
-    description: string
+    description: string;
+}
+
+export type VideoParams = {
+    videoId: string;
 }

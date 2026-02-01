@@ -1,10 +1,12 @@
 import type { Request, Response } from 'express'
 import { asyncHandler } from '../utils/asyncHandler.ts'
-import type { PublishAVideoReqBody } from '../types/types.ts'
+import type { PublishAVideoReqBody, VideoParams } from '../types/types.ts'
 import { ApiError } from '../utils/ApiError.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts';
 import { Video } from '../models/video.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
+import mongoose, { isValidObjectId } from 'mongoose';
+import { User } from '../models/user.model.ts';
 
 
 
@@ -80,6 +82,110 @@ const publishAVideo = asyncHandler(async (req: Request<{}, {}, PublishAVideoReqB
 
 
 
+
+const getVideoById = asyncHandler(async (req: Request, res: Response) => {
+    const { videoId } = req.params as VideoParams;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, 'Invalid or missing video ID');
+    }
+
+    await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $inc: {
+                views: 1
+            }
+        }
+    );
+
+    if (req.user?._id) {
+        await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $addToSet: {
+                    watchHistory: new mongoose.Types.ObjectId(videoId)
+                }
+            }
+        );
+    }
+
+    const currentUser: mongoose.Types.ObjectId | null = req.user?._id ? new mongoose.Types.ObjectId(req.user?._id) : null;
+
+    const video = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'owner',
+                foreignField: '_id',
+                as: 'owner',
+                pipeline: [
+                    {
+                        $project: {
+                            firstName: 1,
+                            lastName: 1,
+                            username: 1,
+                            email: 1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: 'likes',
+                localField: '_id',
+                foreignField: 'video',
+                as: 'likes'
+            }
+        },
+        {
+            $addFields: {
+                owner: {
+                    $first: '$owner'
+                },
+                likesCount: {
+                    $size: '$likes'
+                },
+                isLiked: {
+                    $cond: {
+                        if: {
+                            $in: [currentUser, '$likes.likedBy']
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                likes: 0
+            }
+        }
+    ]);
+
+    if (!video.length) {
+        throw new ApiError(404, 'Video does not exist');
+    }
+
+    console.log('Video[]: ', video);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, video[0], 'Video details fetched successfully')
+    );
+});
+
+
+
 export {
     publishAVideo,
+    getVideoById,
 }
