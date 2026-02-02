@@ -9,6 +9,7 @@ import { options } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
 import mongoose from 'mongoose'
+import type { ChannelProfileDataResponseObj, WatchHistoryVideoDataResponseObj } from '../types/aggregation.types.ts'
 
 
 
@@ -423,7 +424,7 @@ const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) =
         throw new ApiError(400, 'Username is missing');
     }
 
-    const channel = await User.aggregate([
+    const channel = await User.aggregate<ChannelProfileDataResponseObj>([
         {
             $match: {
                 username: username?.toLowerCase()
@@ -497,7 +498,7 @@ const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) =
 
 const getWatchHistory = asyncHandler(async (req: Request, res: Response) => {
 
-    const user = await User.aggregate([
+    const user = await User.aggregate<{watchHistory: WatchHistoryVideoDataResponseObj}>([
         {
             $match: {
                 _id: new mongoose.Types.ObjectId(req.user?._id)
