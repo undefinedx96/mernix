@@ -186,7 +186,74 @@ const getVideoById = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+
+const updateVideo = asyncHandler(async (req: Request, res: Response) => {
+    const { videoId } = req.params as VideoParams;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, 'Invalid or missing video ID');
+    }
+
+    const { title, description } = req.body as PublishAVideoReqBody;
+
+    if ([title, description].some(field => field?.trim() === '')) {
+        throw new ApiError(400, 'Video title and description fields are required');
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, 'Video does not exist');
+    }
+
+    if (video.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(403, 'Unauthorized request! You do not own this video');
+    }
+
+    const thumbnailLocalPath = req.file?.path;
+
+    let uploadedThumbnail;
+
+    if (thumbnailLocalPath) {
+        uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+        
+        if (!uploadedThumbnail) {
+            throw new ApiError(500, 'Failed to upload thumbnail on cloudinary');
+        }
+
+        if (video.thumbnailPublicId) {
+            await deleteFromCloudinary(video.thumbnailPublicId);
+        }
+    }
+
+    const updatedVideo = await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $set: {
+                title,
+                description,
+                thumbnail: uploadedThumbnail?.url || video.thumbnail,
+                thumbnailPublicId: uploadedThumbnail?.public_id || video.thumbnailPublicId
+            }
+        },
+        {
+            new: true
+        }
+    );
+
+    // console.log('Updated video: ', updatedVideo);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedVideo, 'Video updated successfully')
+    );
+});
+
+
+
 export {
     publishAVideo,
     getVideoById,
+    updateVideo,
 }
