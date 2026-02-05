@@ -252,8 +252,47 @@ const updateVideo = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+
+const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
+    const { videoId } = req.params as VideoParams;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, 'Invalid or missing videoID');
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, 'Video does not exist');
+    }
+
+    if (video.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(403, 'Unauthorized request! You do not own this video');
+    }
+
+    if (video.videoFilePublicId) {
+        await deleteFromCloudinary(video.videoFilePublicId, 'video');
+    }
+
+    if (video.thumbnailPublicId) {
+        await deleteFromCloudinary(video.thumbnailPublicId, 'image');
+    }
+
+    const deletedVideo = await Video.findByIdAndDelete(videoId);
+    // console.log('Deleted video: ', deletedVideo);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, {}, 'Video deleted successfully')
+    );
+});
+
+
+
 export {
     publishAVideo,
     getVideoById,
     updateVideo,
+    deleteVideo,
 }
