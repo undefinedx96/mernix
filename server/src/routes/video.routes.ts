@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { verifyJWT } from '../middlewares/auth.middleware.ts'
 import { upload } from '../middlewares/multer.middleware.ts'
-import { getVideoById, publishAVideo, updateVideo } from '../controllers/video.controller.ts'
+import { deleteVideo, getVideoById, publishAVideo, updateVideo } from '../controllers/video.controller.ts'
 
 const videoRouter = Router();
 
@@ -21,5 +21,6 @@ videoRouter.route('/publish-video').post(
 );
 videoRouter.route('/get-video/:videoId').get(getVideoById);
 videoRouter.route('/update-video/:videoId').patch(upload.single('thumbnail'), updateVideo);
+videoRouter.route('/delete-video/:videoId').delete(deleteVideo);
 
 export default videoRouter;
