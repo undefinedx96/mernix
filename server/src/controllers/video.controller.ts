@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express'
 import { asyncHandler } from '../utils/asyncHandler.ts'
-import type { PublishAVideoReqBody, VideoParams } from '../types/types.ts'
+import type { GetAllVideosQueryType, PublishAVideoReqBody, VideoParams } from '../types/types.ts'
 import { ApiError } from '../utils/ApiError.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts';
 import { Video } from '../models/video.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
-import mongoose, { isValidObjectId } from 'mongoose';
+import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose';
 import { User } from '../models/user.model.ts';
 import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts';
 
@@ -278,20 +278,19 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
         await deleteFromCloudinary(video.thumbnailPublicId, 'image');
     }
 
-    const deletedVideo = await Video.findByIdAndDelete(videoId);
-    // console.log('Deleted video: ', deletedVideo);
-
-    const watchHistoryCleanUp = await User.updateMany(
-        {
-            watchHistory: videoId
-        },
-        {
-            $pull: {
-                watchHistory: videoId
+    const deleteVideoAndWatchHistory = await Promise.all([
+        Video.findByIdAndDelete(videoId),
+        User.updateMany(
+            {},
+            {
+                $pull: {
+                    watchHistory: video?._id
+                }
             }
-        }
-    );
-    // console.log('Cleanup watch history: ', watchHistoryCleanUp);
+        )
+    ]);
+
+    // console.log('Delete video and watch history: ', deleteVideoAndWatchHistory);
 
     return res
     .status(200)
