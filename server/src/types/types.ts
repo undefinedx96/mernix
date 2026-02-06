@@ -54,3 +54,14 @@ export interface PublishAVideoReqBody {
 export type VideoParams = {
     videoId: string;
 }
+
+export interface GetAllVideosQuery {
+    page: string;
+    limit: string;
+    searchQuery: string;
+    sortBy: string;
+    sortType: 'asc' | 'desc';
+    userId: string;
+}
+
+export type GetAllVideosQueryType = Partial<GetAllVideosQuery>;

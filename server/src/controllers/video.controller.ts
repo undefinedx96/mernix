@@ -301,9 +301,107 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+
+const getAllVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { page = '1', limit = '10', searchQuery, sortBy = 'createdAt', sortType = 'desc', userId } = req.query;
+
+    const pipeline: PipelineStage[] = [];
+
+    if (searchQuery) {
+        pipeline.push({
+            $match: {
+                $or: [
+                    {
+                        title: {
+                            $regex: searchQuery,
+                            $options: 'i'
+                        }
+                    },
+                    {
+                        description: {
+                            $regex: searchQuery,
+                            $options: 'i'
+                        }
+                    }
+                ]
+            }
+        });
+    }
+
+    if (userId) {
+        if (!isValidObjectId(userId)) {
+            throw new ApiError(400, 'Invalid user ID');
+        }
+        pipeline.push({
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        });
+    }
+
+    const isOwnerRequesting = userId && req.user?._id.toString() === userId.toString();
+
+    if (!isOwnerRequesting) {
+        pipeline.push({
+            $match: {
+                isPublished: true
+            }
+        });
+    }
+
+    pipeline.push({
+        $sort: {
+            [sortBy]: sortType === 'asc' ? 1 : -1
+        }
+    });
+
+    pipeline.push(
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'owner',
+                foreignField: '_id',
+                as: 'owner',
+                pipeline: [
+                    {
+                        $project: {
+                            firstName: 1,
+                            lastName: 1,
+                            username: 1,
+                            avatar: 1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: '$owner'
+        }
+    );
+
+    console.log('Pipeline []: ', pipeline);
+    const videoAggregate = Video.aggregate(pipeline);
+    // console.log('Video aggregate: ', videoAggregate);
+
+    const allVideos = await Video.aggregatePaginate(videoAggregate, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10)
+    });
+    // console.log('All videos after aggregate Paginate: ', allVideos);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, allVideos, 'All videos fetched successfully')
+    );
+});
+
+
+
 export {
     publishAVideo,
     getVideoById,
     updateVideo,
     deleteVideo,
+    getAllVideos,
 }
