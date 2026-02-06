@@ -281,6 +281,18 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
     const deletedVideo = await Video.findByIdAndDelete(videoId);
     // console.log('Deleted video: ', deletedVideo);
 
+    const watchHistoryCleanUp = await User.updateMany(
+        {
+            watchHistory: videoId
+        },
+        {
+            $pull: {
+                watchHistory: videoId
+            }
+        }
+    );
+    // console.log('Cleanup watch history: ', watchHistoryCleanUp);
+
     return res
     .status(200)
     .json(
