@@ -379,7 +379,7 @@ const getAllVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQu
         }
     );
 
-    console.log('Pipeline []: ', pipeline);
+    // console.log('Pipeline []: ', pipeline);
     const videoAggregate = Video.aggregate(pipeline);
     // console.log('Video aggregate: ', videoAggregate);
 

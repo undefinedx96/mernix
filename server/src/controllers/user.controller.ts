@@ -545,7 +545,7 @@ const getWatchHistory = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(404, 'User does not exist');
     }
 
-    console.log('User with watch history: ', user[0]?.watchHistory);
+    // console.log('User with watch history: ', user[0]?.watchHistory);
 
     return res
     .status(200)
