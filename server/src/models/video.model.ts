@@ -52,7 +52,7 @@ const videoSchema = new Schema<IVideo>(
         },
         isPublished: {
             type: Boolean,
-            default: true
+            default: false
         },
         owner: {
             type: Schema.Types.ObjectId,

@@ -52,7 +52,7 @@ const publishAVideo = asyncHandler(async (req: Request<{}, {}, PublishAVideoReqB
             title,
             description,
             duration: videoFile?.duration || 0,
-            isPublished: true,
+            isPublished: false,
             owner: req.user?._id
         });
 
@@ -398,10 +398,49 @@ const getAllVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQu
 
 
 
+
+const togglePublishStatus = asyncHandler(async (req: Request, res: Response) => {
+    const { videoId } = req.params as VideoParams;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, 'Invalid or missing video ID');
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, 'Video does not exist');
+    }
+
+    if (video?.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(403, 'Unauthorized request! You cannot change the status of this video');
+    }
+
+    video.isPublished = !video.isPublished;
+
+    await video.save({ validateBeforeSave: false });
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                videoId: video._id,
+                isPublished: video.isPublished
+            },
+            `Video publish status: ${video.isPublished? 'Published' : 'Unpublished'}`
+        )
+    );
+});
+
+
+
 export {
     publishAVideo,
     getVideoById,
     updateVideo,
     deleteVideo,
     getAllVideos,
+    togglePublishStatus
 }
