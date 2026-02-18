@@ -55,6 +55,10 @@ export type VideoParams = {
     videoId: string;
 }
 
+export type CommentParams = {
+    commentId: string;
+}
+
 export interface GetAllVideosQuery {
     page: string;
     limit: string;
