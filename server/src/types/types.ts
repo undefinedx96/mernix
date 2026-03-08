@@ -59,6 +59,10 @@ export type CommentParams = {
     commentId: string;
 }
 
+export type TweetParams = {
+    tweetId: string;
+}
+
 export interface GetAllVideosQuery {
     page: string;
     limit: string;

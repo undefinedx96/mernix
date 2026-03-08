@@ -1,13 +1,14 @@
 
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.ts'
-import type { CommentParams, VideoParams } from '../types/types.ts';
+import type { CommentParams, TweetParams, VideoParams } from '../types/types.ts';
 import { isValidObjectId } from 'mongoose';
 import { ApiError } from '../utils/ApiError.ts';
 import { Video } from '../models/video.model.ts';
 import { Like } from '../models/like.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
 import { Comment } from '../models/comment.model.ts';
+import { Tweet } from '../models/tweet.model.ts';
 
 
 
@@ -137,7 +138,49 @@ const toggleCommentLike = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+
+const toggleTweetLike = asyncHandler(async (req: Request, res: Response) => {
+    const { tweetId } = req.params as TweetParams;
+
+    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, 'Invalid or missing tweet ID');
+    }
+
+    const unliked = await Like.deleteOne({
+        tweet: tweetId,
+        likedBy: req.user?._id
+    });
+
+    if (unliked.deletedCount > 0) {
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, {isLiked: false}, 'Tweet unliked successfully')
+        );
+    }
+
+    const tweetExists = await Tweet.exists({ _id: tweetId });
+
+    if (!tweetExists) {
+        throw new ApiError(404, 'Tweet does not exist');
+    }
+
+    await Like.create({
+        tweet: tweetId,
+        likedBy: req.user?._id
+    });
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(201, {isLiked: true}, 'Tweet liked successfully')
+    );
+});
+
+
+
 export {
     toggleVideoLike,
     toggleCommentLike,
+    toggleTweetLike,
 }
