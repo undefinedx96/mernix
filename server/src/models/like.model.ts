@@ -1,4 +1,5 @@
-import mongoose, { Document, Schema } from 'mongoose'
+import mongoose, { Document, Schema, type AggregatePaginateModel } from 'mongoose'
+import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 export interface ILike extends Document {
     comment: mongoose.Types.ObjectId;
@@ -31,4 +32,6 @@ const likeSchema = new Schema<ILike>(
     }
 );
 
-export const Like = mongoose.model<ILike>('Like', likeSchema);
+likeSchema.plugin(mongooseAggregatePaginate);
+
+export const Like = mongoose.model<ILike, AggregatePaginateModel<ILike>>('Like', likeSchema);
