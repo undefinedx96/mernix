@@ -22,6 +22,7 @@ app.use(cookieParser());
 
 
 import {
+    commentRouter,
     likeRouter,
     userRouter,
     videoRouter,
@@ -31,5 +32,6 @@ import {
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/videos', videoRouter);
 app.use('/api/v1/likes', likeRouter);
+app.use('/api/v1/comments', commentRouter);
 
 export { app }
