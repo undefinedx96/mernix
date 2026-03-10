@@ -72,4 +72,8 @@ export interface GetAllVideosQuery {
     userId: string;
 }
 
+export interface CommentBody {
+    content: string;
+}
+
 export type GetAllVideosQueryType = Partial<GetAllVideosQuery>;
