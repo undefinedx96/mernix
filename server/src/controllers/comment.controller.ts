@@ -21,10 +21,10 @@ const addComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res:Re
         throw new ApiError(400, 'Invalid or missing video ID');
     }
     
-    const videoExists = await Video.exists({ _id: videoId });
+    const video = await Video.findOne({ _id: videoId, isPublished: true });
 
-    if (!videoExists) {
-        throw new ApiError(404, 'Video does not exist');
+    if (!video) {
+        throw new ApiError(404, 'Video does not exist or is private');
     }
 
     if (!content?.trim()) {
@@ -42,10 +42,21 @@ const addComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res:Re
         throw new ApiError(500, 'Falied to add comment');
     }
 
+    const createdComment = await Comment.findById(comment._id).populate(
+        'owner',
+        'username avatar firstName lastName'
+    );
+
+    if (!createdComment) {
+        throw new ApiError(500, 'Failed to retreive comment');
+    }
+
+    // console.log('Created comment: ', createdComment);
+
     return res
     .status(201)
     .json(
-        new ApiResponse(201, comment, 'Comment created successfully')
+        new ApiResponse(201, createdComment, 'Comment created successfully')
     );
 });
 
