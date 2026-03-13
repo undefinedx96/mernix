@@ -65,7 +65,7 @@ const addComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res:Re
 
 const updateComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res: Response) => {
     const { commentId } = req.params as CommentParams;
-    const { content } = req.body as CommentBody;
+    const { content } = req.body;
 
     if (!isValidObjectId(commentId)) {
         throw new ApiError(400, 'Invalid or missing comment ID');
