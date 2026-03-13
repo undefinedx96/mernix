@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.ts';
-import type { CommentBody, VideoParams } from '../types/types.ts';
+import type { CommentBody, CommentParams, VideoParams } from '../types/types.ts';
 import { isValidObjectId } from 'mongoose';
 import { ApiError } from '../utils/ApiError.ts';
 import { Comment } from '../models/comment.model.ts';
@@ -62,6 +62,50 @@ const addComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res:Re
 
 
 
+
+const updateComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res: Response) => {
+    const { commentId } = req.params as CommentParams;
+    const { content } = req.body as CommentBody;
+
+    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, 'Invalid or missing comment ID');
+    }
+
+    if (!content?.trim()) {
+        throw new ApiError(400, 'Content is required');
+    }
+
+    const updatedComment = await Comment.findOneAndUpdate(
+        {
+            _id: commentId,
+            owner: req.user?._id
+        },
+        {
+            $set: {
+                content: content.trim()
+            }
+        },
+        {
+            new: true
+        }
+    ).populate('owner', 'username avatar firstName lastName');
+
+    if (!updatedComment) {
+        throw new ApiError(404, 'Comment not found or unauthorized to edit');
+    }
+
+    // console.log('Updated comment: ', updatedComment);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedComment, 'Comment updated successfully')
+    );
+});
+
+
+
 export {
     addComment,
+    updateComment,
 }
