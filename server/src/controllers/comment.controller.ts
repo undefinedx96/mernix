@@ -6,6 +6,7 @@ import { ApiError } from '../utils/ApiError.ts';
 import { Comment } from '../models/comment.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
 import { Video } from '../models/video.model.ts';
+import { Like } from '../models/like.model.ts';
 
 
 
@@ -105,7 +106,40 @@ const updateComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res
 
 
 
+
+const deleteComment = asyncHandler(async (req: Request, res: Response) => {
+    const { commentId } = req.params as CommentParams;
+
+    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, 'Invalid or missing comment ID');
+    }
+
+    const comment = await Comment.findById(commentId);
+
+    if (!comment) {
+        throw new ApiError(404, 'Comment does not exist');
+    }
+
+    if (comment.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(403, 'Unauthorized! You do not have permission to delete this comment');
+    }
+
+    await Promise.all([
+        Comment.findByIdAndDelete(commentId),
+        Like.deleteMany({ comment: commentId })
+    ]);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, {}, 'Comment deleted successfully')
+    );
+});
+
+
+
 export {
     addComment,
     updateComment,
+    deleteComment,
 }
