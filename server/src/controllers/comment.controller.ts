@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.ts';
-import type { CommentBody, CommentParams, VideoParams } from '../types/types.ts';
-import { isValidObjectId } from 'mongoose';
+import type { CommentBody, CommentParams, GetAllVideosQueryType, VideoParams } from '../types/types.ts';
+import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose';
 import { ApiError } from '../utils/ApiError.ts';
 import { Comment } from '../models/comment.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
@@ -138,8 +138,112 @@ const deleteComment = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+
+const getVideoComments = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { videoId } = req.params as VideoParams;
+    const { page = '1', limit = '10' } = req.query;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, 'Invalid or missing video ID');
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, 'Video does not exist');
+    }
+
+    const pipeline: PipelineStage[] = [
+        {
+            $match: {
+                video: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'owner',
+                foreignField: '_id',
+                as: 'commenter',
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            avatar: 1,
+                            firstName: 1,
+                            lastName: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                commenter: {
+                    $first: '$commenter'
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: 'likes',
+                localField: '_id',
+                foreignField: 'comment',
+                as: 'likes'
+            }
+        },
+        {
+            $addFields: {
+                likesCount: {
+                    $size: '$likes'
+                },
+                isLiked: {
+                    $cond: {
+                        if: { $in: [req.user?._id, '$likes.likedBy'] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        },
+        {
+            $project: {
+                likes: 0
+            }
+        }
+    ];
+    // console.log('Pipeline: ', pipeline);
+
+    const commentAggregate = Comment.aggregate(pipeline);
+    // console.log('Comments aggregated: ', commentAggregate);
+
+    const comments = await Comment.aggregatePaginate(commentAggregate, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        customLabels: {
+            totalDocs: 'totalComments',
+            docs: 'comments'
+        }
+    });
+    // console.log('Video comments: ', comments);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, comments, 'Comments fetched successfully')
+    );
+});
+
+
+
 export {
     addComment,
     updateComment,
     deleteComment,
+    getVideoComments
 }
