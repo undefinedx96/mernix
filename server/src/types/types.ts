@@ -76,4 +76,8 @@ export interface CommentBody {
     content: string;
 }
 
+export interface TweetBody {
+    content: string;
+}
+
 export type GetAllVideosQueryType = Partial<GetAllVideosQuery>;
