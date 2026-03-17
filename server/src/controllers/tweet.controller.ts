@@ -5,6 +5,7 @@ import { ApiError } from '../utils/ApiError.ts';
 import { Tweet } from '../models/tweet.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
 import { isValidObjectId } from 'mongoose';
+import { Like } from '../models/like.model.ts';
 
 
 
@@ -92,7 +93,40 @@ const updateTweet = asyncHandler(async(req: Request<{}, {}, TweetBody>, res: Res
 
 
 
+
+const deleteTweet = asyncHandler(async(req: Request, res: Response) => {
+    const { tweetId } = req.params as TweetParams;
+
+    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, 'Invalid or missing tweet ID');
+    }
+
+    const tweet = await Tweet.findById(tweetId);
+
+    if (!tweet) {
+        throw new ApiError(404, 'Tweet does not exist');
+    }
+
+    if (tweet.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(403, 'Unauthorized! You do not have permission to delete this tweet');
+    }
+
+    await Promise.all([
+        Tweet.findByIdAndDelete(tweetId),
+        Like.deleteMany({ tweet: tweetId })
+    ]);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, { tweetId }, 'Tweet deleted successfully')
+    );
+});
+
+
+
 export {
     createTweet,
     updateTweet,
+    deleteTweet,
 }
