@@ -63,6 +63,10 @@ export type TweetParams = {
     tweetId: string;
 }
 
+export type TweetUserParams = {
+    userId: string;
+}
+
 export interface GetAllVideosQuery {
     page: string;
     limit: string;
