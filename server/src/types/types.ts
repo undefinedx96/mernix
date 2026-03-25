@@ -67,6 +67,10 @@ export type TweetUserParams = {
     userId: string;
 }
 
+export type ChannelParams = {
+    channelId: string;
+}
+
 export interface GetAllVideosQuery {
     page: string;
     limit: string;
