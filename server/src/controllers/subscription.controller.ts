@@ -31,7 +31,7 @@ const toggleSubscription = asyncHandler(async (req: Request, res: Response) => {
         subscriber: req.user?._id,
         channel: channelId
     });
-    console.log('Existing subs: ', existingSubscription);
+    // console.log('Existing subs: ', existingSubscription);
 
     if (existingSubscription) {
         await Subscription.findByIdAndDelete(existingSubscription?._id);
