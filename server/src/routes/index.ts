@@ -3,6 +3,7 @@ import videoRouter from './video.routes.ts'
 import likeRouter from './like.routes.ts'
 import commentRouter from './comment.routes.ts'
 import tweetRouter from './tweet.routes.ts'
+import subscriptionRouter from './subscription.routes.ts'
 
 export {
     userRouter,
@@ -10,4 +11,5 @@ export {
     likeRouter,
     commentRouter,
     tweetRouter,
+    subscriptionRouter,
 }
