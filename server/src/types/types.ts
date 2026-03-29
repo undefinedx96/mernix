@@ -71,6 +71,10 @@ export type ChannelParams = {
     channelId: string;
 }
 
+export type SubscriptionParams = {
+    subscriberId: string;
+}
+
 export interface GetAllVideosQuery {
     page: string;
     limit: string;

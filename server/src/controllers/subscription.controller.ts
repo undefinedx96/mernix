@@ -131,7 +131,7 @@ const getUserChannelSubscribers = asyncHandler(async (req: Request<{}, {}, {}, G
             docs: 'subscribers'
         }
     });
-    console.log('Subscribers: ', subscribers);
+    // console.log('Subscribers: ', subscribers);
 
     return res
     .status(200)
@@ -142,7 +142,90 @@ const getUserChannelSubscribers = asyncHandler(async (req: Request<{}, {}, {}, G
 
 
 
+
+const getSubscribedChannels = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { subscriberId } = req.params as SubscriptionParams;
+    const { page = '1', limit = '10' } = req.query;
+
+    if (!isValidObjectId(subscriberId)) {
+        throw new ApiError(400, 'Invalid or missing subscriber ID');
+    }
+
+    const existingSubscriber = await User.exists({ _id: subscriberId });
+
+    if (!existingSubscriber) {
+        throw new ApiError(404, 'Subscriber does not exist');
+    }
+
+    if (subscriberId.toString() !== req.user?._id.toString()) {
+        throw new ApiError(403, "Unauthorized! You do not have permission to view another user's subscription list");
+    }
+
+    const subscriptionAggregate = Subscription.aggregate([
+        {
+            $match: {
+                subscriber: new mongoose.Types.ObjectId(subscriberId)
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'channel',
+                foreignField: '_id',
+                as: 'channel',
+                pipeline: [
+                    {
+                        $project: {
+                            firstName: 1,
+                            lastName: 1,
+                            username: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                channel: {
+                    $first: '$channel'
+                }
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        },
+        {
+            $project: {
+                channel: 1,
+                createdAt: 1
+            }
+        }
+    ]);
+    
+    const subscribedChannels = await Subscription.aggregatePaginate(subscriptionAggregate, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        customLabels: {
+            totalDocs: 'subscribedChannelsCount',
+            docs: 'subscribedChannels'
+        }
+    });
+    // console.log('Subscribed channels: ', subscribedChannels);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, subscribedChannels, `Subscribed channels of user ${existingSubscriber._id} fetched successfully`)
+    );
+});
+
+
+
 export {
     toggleSubscription,
     getUserChannelSubscribers,
+    getSubscribedChannels
 }
