@@ -1,4 +1,5 @@
 import mongoose, { Document, model, Schema } from 'mongoose'
+import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 export interface ISubscription extends Document {
     channel: mongoose.Types.ObjectId;
@@ -26,4 +27,6 @@ const subscriptionSchema = new Schema<ISubscription>(
 // unique compound index prevents a user from subscribing twice to the same channel. this is a safety net at the database level.
 subscriptionSchema.index({ subscriber: 1, channel: 1 }, { unique: true });
 
-export const Subscription = model<ISubscription>('Subscription', subscriptionSchema);
+subscriptionSchema.plugin(mongooseAggregatePaginate);
+
+export const Subscription = model<ISubscription, mongoose.AggregatePaginateModel<ISubscription>>('Subscription', subscriptionSchema);
