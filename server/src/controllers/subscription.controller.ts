@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.ts';
-import type { ChannelParams } from '../types/types.ts';
+import type { ChannelParams, GetAllVideosQueryType, SubscriptionParams } from '../types/types.ts';
 import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose';
 import { ApiError } from '../utils/ApiError.ts';
 import { User } from '../models/user.model.ts';
@@ -61,8 +61,9 @@ const toggleSubscription = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-const getUserChannelSubscribers = asyncHandler(async (req: Request, res: Response) => {
+const getUserChannelSubscribers = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
     const { channelId } = req.params as ChannelParams;
+    const { page = '1', limit = '10' } = req.query;
 
     if (!isValidObjectId(channelId)) {
         throw new ApiError(400, 'Invalid or missing channel ID');
@@ -78,7 +79,7 @@ const getUserChannelSubscribers = asyncHandler(async (req: Request, res: Respons
         throw new ApiError(403, 'Unauthorized! Only the channel owner can view their subscriber list');
     }
 
-    const subscribers: PipelineStage[] = await Subscription.aggregate([
+    const subscriberAggregate = Subscription.aggregate([
         {
             $match: {
                 channel: new mongoose.Types.ObjectId(channelId)
@@ -121,19 +122,21 @@ const getUserChannelSubscribers = asyncHandler(async (req: Request, res: Respons
             }
         }
     ]);
-    // console.log('Subscribers aggregated and subscribers count: ', subscribers, subscribers.length);
+
+    const subscribers = await Subscription.aggregatePaginate(subscriberAggregate, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        customLabels: {
+            totalDocs: 'subscribersCount',
+            docs: 'subscribers'
+        }
+    });
+    console.log('Subscribers: ', subscribers);
 
     return res
     .status(200)
     .json(
-        new ApiResponse(
-            200,
-            {
-                subscribers,
-                subscribersCount: subscribers.length
-            },
-            `Subscribers of channel ${channelExists._id} fetched successfully`
-        )
+        new ApiResponse(200, subscribers, `Subscribers of channel ${channelExists._id} fetched successfully`)
     );
 });
 
