@@ -92,4 +92,9 @@ export interface TweetBody {
     content: string;
 }
 
+export interface PlaylistBody {
+    name: string;
+    description: string;
+}
+
 export type GetAllVideosQueryType = Partial<GetAllVideosQuery>;
