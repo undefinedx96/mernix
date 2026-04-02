@@ -97,4 +97,9 @@ export interface PlaylistBody {
     description: string;
 }
 
+export type PlaylistParams = {
+    playlistId: string;
+    videoId: string;
+}
+
 export type GetAllVideosQueryType = Partial<GetAllVideosQuery>;
