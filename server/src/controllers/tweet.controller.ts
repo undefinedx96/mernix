@@ -76,7 +76,7 @@ const updateTweet = asyncHandler(async(req: Request<{}, {}, TweetBody>, res: Res
             }
         },
         {
-            new: true
+            returnDocument: 'after'
         }
     ).populate('owner', 'username avatar firstName lastName');
 
