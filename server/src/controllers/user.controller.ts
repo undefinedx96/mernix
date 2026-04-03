@@ -164,7 +164,7 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
             }
         },
         {
-            new: true
+            returnDocument: 'after'
         }
     );
 
@@ -293,7 +293,7 @@ const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAcco
             }
         },
         {
-            new: true,
+            returnDocument: 'after',
             // runValidators: true     // ensures schema rules (like minLength) are checked
         }
     ).select('-password -refreshToken');
@@ -344,7 +344,7 @@ const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
             }
         },
         {
-            new: true
+            returnDocument: 'after'
         }
     ).select('-password -refreshToken');
 
@@ -396,7 +396,7 @@ const updateUserCoverImage = asyncHandler(async (req: Request, res: Response) =>
             }
         },
         {
-            new: true
+            returnDocument: 'after'
         }
     ).select('-password -refreshToken');
 

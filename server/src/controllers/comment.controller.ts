@@ -87,7 +87,7 @@ const updateComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res
             }
         },
         {
-            new: true
+            returnDocument: 'after'
         }
     ).populate('owner', 'username avatar firstName lastName');
 
