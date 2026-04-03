@@ -77,7 +77,10 @@ const  addVideoToPlaylist = asyncHandler(async (req: Request, res: Response) => 
     const updatedPlaylist = await Playlist.findOneAndUpdate(
         {
             _id: playlistId,
-            owner: req.user?._id
+            owner: req.user?._id,
+            videos: {
+                $ne: videoId
+            }
         },
         {
             $addToSet: {
@@ -90,6 +93,15 @@ const  addVideoToPlaylist = asyncHandler(async (req: Request, res: Response) => 
     ).populate('videos', 'title thumbnail duration views');
 
     if (!updatedPlaylist) {
+        const playlistExists = await Playlist.exists({
+            _id: playlistId,
+            owner: req.user?._id
+        });
+
+        if (playlistExists) {
+            throw new ApiError(409, 'Video already exists in this playlist');
+        }
+
         throw new ApiError(404, 'Playlist not found or you do not have permission to edit it');
     }
     // console.log('Updated playlist: ', updatedPlaylist);
