@@ -115,7 +115,59 @@ const  addVideoToPlaylist = asyncHandler(async (req: Request, res: Response) => 
 
 
 
+
+const removeVideoFromPlaylist = asyncHandler(async (req: Request, res: Response) => {
+    const { playlistId, videoId } = req.params as PlaylistParams;
+
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400, 'Invalid or missing playlist ID');
+    }
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, 'Invalid or missing video ID');
+    }
+
+    const updatedPlaylist = await Playlist.findOneAndUpdate(
+        {
+            _id: playlistId,
+            owner: req.user?._id,
+            videos: videoId
+        },
+        {
+            $pull:{
+                videos: videoId
+            }
+        },
+        {
+            returnDocument: 'after'
+        }
+    ).populate('videos', 'title thumbnail duration views');
+
+    if (!updatedPlaylist) {
+        const playlistExists = await Playlist.exists({
+            _id: playlistId,
+            owner: req.user?._id
+        });
+
+        if (playlistExists) {
+            throw new ApiError(404, 'Video not found in this playlist');
+        }
+
+        throw new ApiError(404, 'Playlist not found or you do not have permission to delete it');
+    }
+    console.log('Updated playlist: ', updatedPlaylist);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedPlaylist, 'Deleted video from playlist successfully')
+    );
+});
+
+
+
 export {
     createPlayList,
     addVideoToPlaylist,
+    removeVideoFromPlaylist,
 }
