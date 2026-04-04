@@ -155,7 +155,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req: Request, res: Response)
 
         throw new ApiError(404, 'Playlist not found or you do not have permission to delete it');
     }
-    console.log('Updated playlist: ', updatedPlaylist);
+    // console.log('Updated playlist: ', updatedPlaylist);
 
     return res
     .status(200)
@@ -166,8 +166,62 @@ const removeVideoFromPlaylist = asyncHandler(async (req: Request, res: Response)
 
 
 
+
+const updatePlaylist = asyncHandler(async  (req: Request<{}, {}, PlaylistBody>, res: Response) => {
+    const { playlistId } = req.params as PlaylistParams;
+    const { name, description } = req.body;
+
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400,  'Invalid or missing playlist ID');
+    }
+
+    if (!name?.trim()) {
+        throw new ApiError(400,'Playlist name is required');
+    }
+
+    if (!description?.trim()) {
+        throw new ApiError(400, 'Playlist description is required');
+    }
+
+    const updatedPlaylist = await Playlist.findOneAndUpdate(
+        {
+            _id: playlistId,
+            owner: req.user?._id
+        },
+        {
+            $set: {
+                name: name.trim(),
+                description: description.trim()
+            }
+        },
+        {
+            returnDocument:  'after'
+        }
+    );
+
+    if (!updatedPlaylist) {
+        const playlistExists = await Playlist.exists({ _id: playlistId });
+
+        if (!playlistExists) {
+            throw new ApiError(404, 'Playlist does not exist');
+        }
+
+        throw new ApiError(403, 'Unauthorized! You do not have permission to modify this playlist');
+    }
+    // console.log('Updated playlist: ', updatedPlaylist);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedPlaylist, 'Playlist metadata updated successfully')
+    );
+});
+
+
+
 export {
     createPlayList,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
+    updatePlaylist,
 }
