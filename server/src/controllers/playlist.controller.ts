@@ -219,9 +219,45 @@ const updatePlaylist = asyncHandler(async  (req: Request<{}, {}, PlaylistBody>, 
 
 
 
+
+const deletePlaylist = asyncHandler(async (req: Request, res: Response) => {
+    const { playlistId } = req.params as PlaylistParams;
+
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400, 'Invalid or missing playlist ID');
+    }
+
+    const deletedPlaylist = await Playlist.findOneAndDelete(
+        {
+            _id: playlistId,
+            owner: req.user?._id
+        },
+    );
+
+    if (!deletedPlaylist) {
+        const playlistExists = await Playlist.exists({ _id: playlistId });
+
+        if (!playlistExists) {
+            throw new ApiError(404, 'Playlist does not exist');
+        }
+
+        throw new ApiError(403, 'Unauthorized! You do not have permission to delete this playlist');
+    }
+    // console.log('Deleted playlist: ', deletedPlaylist);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, {}, 'Playlist deleted successfully')
+    );
+});
+
+
+
 export {
     createPlayList,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
     updatePlaylist,
+    deletePlaylist,
 }
