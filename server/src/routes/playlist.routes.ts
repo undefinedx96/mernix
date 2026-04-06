@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { verifyJWT } from '../middlewares/auth.middleware.ts';
-import { addVideoToPlaylist, createPlayList, removeVideoFromPlaylist, updatePlaylist } from '../controllers/playlist.controller.ts';
+import { addVideoToPlaylist, createPlayList, deletePlaylist, removeVideoFromPlaylist, updatePlaylist } from '../controllers/playlist.controller.ts';
 
 const playlistRouter = Router();
 
@@ -10,5 +10,6 @@ playlistRouter.route('/create-playlist').post(createPlayList);
 playlistRouter.route('/add-video-to-playlist/:playlistId/:videoId').patch(addVideoToPlaylist);
 playlistRouter.route('/remove-video-from-playlist/:playlistId/:videoId').patch(removeVideoFromPlaylist);
 playlistRouter.route('/update-playlist/:playlistId').patch(updatePlaylist);
+playlistRouter.route('/delete-playlist/:playlistId').delete(deletePlaylist);
 
 export default playlistRouter;
