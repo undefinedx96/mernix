@@ -1,11 +1,12 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.ts';
-import type { PlaylistBody, PlaylistParams } from '../types/types.ts';
+import type { GetAllVideosQueryType, PlaylistBody, PlaylistParams } from '../types/types.ts';
 import { ApiError } from '../utils/ApiError.ts';
 import { Playlist } from '../models/playlist.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
-import { isValidObjectId } from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import { Video } from '../models/video.model.ts';
+import type { PaginatedPlaylistResponse } from '../types/aggregation.types.ts';
 
 
 
@@ -254,10 +255,118 @@ const deletePlaylist = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+
+const getPlaylistById = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { playlistId } = req.params as PlaylistParams;
+    const { page = '1', limit = '10' } = req.query;
+
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400, 'Invalid or missing playlist ID');
+    }
+
+    const playlist = Playlist.aggregate([
+        {
+            $match: {
+                _id:  new mongoose.Types.ObjectId(playlistId)
+            }
+        },
+        {
+            $unwind: '$videos'
+        },
+        {
+            $lookup: {
+                from: 'videos',
+                localField: 'videos',
+                foreignField: '_id',
+                as: 'videoDetails',
+                pipeline: [
+                    {
+                        $match: {
+                            isPublished:true
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: 'users',
+                            localField: 'owner',
+                            foreignField: '_id',
+                            as: 'owner',
+                            pipeline: [
+                                {
+                                    $project: {
+                                        firstName: 1,
+                                        lastName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: '$owner'
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                videoDetails: {
+                    $first: '$videoDetails'
+                }
+            }
+        },
+        {
+            $project: {
+                name: 1,
+                description:1,
+                video: '$videoDetails'
+            }
+        }
+    ]);
+
+    const aggregatedPlaylist = (await Playlist.aggregatePaginate(playlist, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        customLabels: {
+            totalDocs:'totalVideos',
+            docs: 'playlistArr'
+        }
+    })) as unknown as PaginatedPlaylistResponse;
+
+    if (!aggregatedPlaylist || aggregatedPlaylist?.playlistArr?.length === 0) {
+        const playlistExists = await Playlist.exists({ _id: playlistId });
+
+        if (!playlistExists) {
+            throw new ApiError(404, 'Playlist not found');
+        }
+
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, aggregatedPlaylist, 'Playlist is currently empty')
+        );
+    }
+    // console.log('Aggregated playlist: ', aggregatedPlaylist);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, aggregatedPlaylist, 'Playlist fetched successfully')
+    );
+});
+
+
+
 export {
     createPlayList,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
     updatePlaylist,
     deletePlaylist,
+    getPlaylistById,
 }

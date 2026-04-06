@@ -50,3 +50,16 @@ export interface WatchHistoryVideoDataResponseObj extends VideoDetailDataRespons
 //     updatedAt: string;
 //     owner: VideoOwnerDataResponseObj;
 // }
+
+export interface PaginatedPlaylistResponse {
+    playlistArr: VideoDetailDataResponseObj[];
+    totalVideos: number;
+    limit: number;
+    page: number;
+    totalPages: number;
+    pagingCounter: number;
+    hasPrevPage: number;
+    hasNextPage: number;
+    prevPage: number | null;
+    nextPage: number | null;
+}
