@@ -63,3 +63,25 @@ export interface PaginatedPlaylistResponse {
     prevPage: number | null;
     nextPage: number | null;
 }
+
+export interface UserPlaylistSummary {
+    _id: string;
+    name: string;
+    description: string;
+    videoCount: number;
+    thumbnailVideo: string;
+    updatedAt: Date;
+}
+
+export interface PaginatedPlaylistsResponse {
+    playlistsArr: UserPlaylistSummary[];
+    totalPlaylists: number;
+    limit: number;
+    page: number;
+    totalPages: number;
+    pagingCounter: number;
+    hasPrevPage: boolean;
+    hasNextPage: boolean;
+    prevPage: number | null;
+    nextPage: number | null;
+}
