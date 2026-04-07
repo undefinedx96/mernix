@@ -1,12 +1,13 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.ts';
-import type { GetAllVideosQueryType, PlaylistBody, PlaylistParams } from '../types/types.ts';
+import type { GetAllVideosQueryType, PlaylistBody, PlaylistParams, TweetUserParams } from '../types/types.ts';
 import { ApiError } from '../utils/ApiError.ts';
 import { Playlist } from '../models/playlist.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
 import mongoose, { isValidObjectId } from 'mongoose';
 import { Video } from '../models/video.model.ts';
-import type { PaginatedPlaylistResponse } from '../types/aggregation.types.ts';
+import type { PaginatedPlaylistResponse, PaginatedPlaylistsResponse } from '../types/aggregation.types.ts';
+import { User } from '../models/user.model.ts';
 
 
 
@@ -362,6 +363,81 @@ const getPlaylistById = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideo
 
 
 
+
+const getUserPlaylists = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { userId } = req.params as TweetUserParams;
+    const { page = '1', limit = '10' } = req.query;
+
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, 'Invalid or missing user ID');
+    }
+
+    const playlists = Playlist.aggregate([
+        {
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $addFields: {
+                videoCount: {
+                    $size: '$videos'
+                },
+                thumbnailVideo: {
+                    $arrayElemAt: ['$videos', 0]
+                }
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                description: 1,
+                videoCount: 1,
+                thumbnailVideo: 1,
+                updatedAt: 1
+            }
+        },
+        {
+            $sort: {
+                updatedAt: -1
+            }
+        }
+    ]);
+
+    const playlistsAggregated = (await Playlist.aggregatePaginate(playlists, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        customLabels: {
+            totalDocs: 'totalPlaylists',
+            docs: 'playlistsArr'
+        }
+    })) as unknown as PaginatedPlaylistsResponse;
+
+    if (!playlistsAggregated || playlistsAggregated?.playlistsArr?.length === 0) {
+        const userExists = await User.exists({ _id: userId });
+
+        if (!userExists) {
+            throw new ApiError(404, 'User does not exist');
+        }
+
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, playlistsAggregated, 'No playlists found')
+        );
+    }
+    // console.log('Playlists aggregated and paginated: ', playlistsAggregated);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, playlistsAggregated, 'Playlists fetched successfully')
+    );
+});
+
+
+
 export {
     createPlayList,
     addVideoToPlaylist,
@@ -369,4 +445,5 @@ export {
     updatePlaylist,
     deletePlaylist,
     getPlaylistById,
+    getUserPlaylists
 }
