@@ -5,6 +5,7 @@ import commentRouter from './comment.routes.ts'
 import tweetRouter from './tweet.routes.ts'
 import subscriptionRouter from './subscription.routes.ts'
 import playlistRouter from './playlist.routes.ts'
+import dashboardRouter from './dashboard.routes.ts'
 
 export {
     userRouter,
@@ -14,4 +15,5 @@ export {
     tweetRouter,
     subscriptionRouter,
     playlistRouter,
+    dashboardRouter
 }
