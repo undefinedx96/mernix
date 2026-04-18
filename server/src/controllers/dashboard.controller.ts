@@ -6,7 +6,8 @@ import { Video } from '../models/video.model.ts';
 import { Subscription } from '../models/subscription.model.ts';
 import { Like } from '../models/like.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
-import type { ChannelStatsResponse } from '../types/types.ts';
+import type { ChannelStatsResponse, GetAllVideosQueryType } from '../types/types.ts';
+import type { PaginatedPlaylistResponse } from '../types/aggregation.types.ts';
 
 
 
@@ -97,6 +98,53 @@ const getChannelStats = asyncHandler(async (req: Request, res: Response) =>{
 
 
 
+
+const getChannelVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const userId = req.user?._id;
+    const { page = '1', limit = '10' } = req.query;
+
+    if (!userId) {
+        throw new ApiError(401, 'Unauthenticated unauthorized request');
+    }
+
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, 'Unauthenticated unauthorized request');
+    }
+
+    const videoAggregate = Video.aggregate([
+        {
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        }
+    ]);
+
+    const videos = (await Video.aggregatePaginate(videoAggregate, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        customLabels: {
+            totalDocs: 'totalVideos',
+            docs: 'videos'
+        }
+    })) as unknown as PaginatedPlaylistResponse;
+
+    // console.log('Videos: ', videos);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, videos, 'Channel videos fetched successfully')
+    );
+});
+
+
+
 export {
     getChannelStats,
+    getChannelVideos
 }
