@@ -24,6 +24,7 @@ app.use(cookieParser());
 import {
     commentRouter,
     dashboardRouter,
+    healthCheckRouter,
     likeRouter,
     playlistRouter,
     subscriptionRouter,
@@ -41,5 +42,6 @@ app.use('/api/v1/tweets', tweetRouter);
 app.use('/api/v1/subscriptions', subscriptionRouter);
 app.use('/api/v1/playlists', playlistRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
+app.use('/api/v1/healthcheck', healthCheckRouter);
 
 export { app }
