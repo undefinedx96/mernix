@@ -110,3 +110,10 @@ export interface ChannelStatsResponse {
 }
 
 export type GetAllVideosQueryType = Partial<GetAllVideosQuery>;
+
+export interface HealthCheckResponse {
+    status: string;
+    uptime: number;
+    timestamp: number;
+    environment: string;
+}
