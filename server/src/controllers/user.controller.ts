@@ -259,10 +259,45 @@ const changeCurrentPassword = asyncHandler(async (req: Request<{}, {}, ChangeCur
 
 
 const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $lookup: {
+                from: 'videos',
+                localField: 'watchHistory',
+                foreignField: '_id',
+                as: 'validVideos'
+            }
+        },
+        {
+            $addFields: {
+                watchHistory: '$validVideos._id'
+            }
+        },
+        {
+            $project: {
+                validVideos: 0,
+                password: 0,
+                refreshToken: 0,
+                __v: 0
+            }
+        }
+    ]);
+
+    if (!user || user.length === 0) {
+        throw new ApiError(404, 'User does not exist');
+    }
+
     return res
     .status(200)
     .json(
-        new ApiResponse(200, req.user, 'Current user fetched successfully')
+        new ApiResponse(200, user[0], 'Current user fetched successfully')
     );
 });
 
