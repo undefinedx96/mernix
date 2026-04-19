@@ -91,27 +91,33 @@ const getVideoById = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(400, 'Invalid or missing video ID');
     }
 
-    await Video.findByIdAndUpdate(
-        videoId,
-        {
-            $inc: {
-                views: 1
-            }
-        }
-    );
-
-    if (req.user?._id) {
-        await User.findByIdAndUpdate(
-            req.user?._id,
+    const updateTasks: Promise<any>[] = [
+        Video.findByIdAndUpdate(
+            videoId,
             {
-                $addToSet: {
-                    watchHistory: new mongoose.Types.ObjectId(videoId)
+                $inc: {
+                    views: 1
                 }
             }
+        )
+    ];
+
+    if (req.user?._id) {
+        updateTasks.push(
+            User.findByIdAndUpdate(
+                req.user._id,
+                {
+                    $addToSet: {
+                        watchHistory: new mongoose.Types.ObjectId(videoId)
+                    }
+                }
+            )
         );
     }
 
-    const currentUser: mongoose.Types.ObjectId | null = req.user?._id ? new mongoose.Types.ObjectId(req.user?._id) : null;
+    await Promise.all(updateTasks);
+
+    const currentUser = req.user?._id ? new mongoose.Types.ObjectId(req.user?._id) : null;
 
     const video = await Video.aggregate<VideoDetailDataResponseObj>([
         {
@@ -171,7 +177,7 @@ const getVideoById = asyncHandler(async (req: Request, res: Response) => {
         }
     ]);
 
-    if (!video.length) {
+    if (!video || video.length === 0) {
         throw new ApiError(404, 'Video does not exist');
     }
 
@@ -281,10 +287,12 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
     const deleteVideoAndWatchHistory = await Promise.all([
         Video.findByIdAndDelete(videoId),
         User.updateMany(
-            {},
+            {
+                watchHistory: videoId
+            },
             {
                 $pull: {
-                    watchHistory: video?._id
+                    watchHistory: videoId
                 }
             }
         )
@@ -295,7 +303,7 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
     return res
     .status(200)
     .json(
-        new ApiResponse(200, {}, 'Video deleted successfully')
+        new ApiResponse(200, {}, 'Video deleted and watch history purged successfully')
     );
 });
 
