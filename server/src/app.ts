@@ -32,6 +32,10 @@ import {
     userRouter,
     videoRouter,
 } from './routes/index.ts'
+import swaggerUi from 'swagger-ui-express'
+import YAML from 'yamljs'
+
+const swaggerDocument = YAML.load('./swaggerDoc.yaml');
 
 
 app.use('/api/v1/users', userRouter);
@@ -43,5 +47,7 @@ app.use('/api/v1/subscriptions', subscriptionRouter);
 app.use('/api/v1/playlists', playlistRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/healthcheck', healthCheckRouter);
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 export { app }
