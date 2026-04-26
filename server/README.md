@@ -10,3 +10,10 @@
 ```bash
 p2o ./mernix.postman_collection.json -f ./swaggerDoc.yaml
 ```
+
+
+### CLI to run `ngrok` server with local server
+
+```bash
+ngrok http PORT --url=http://dummy-url.ngrok-free.dev --traffic-policy-file=traffic-policies.yaml
+```

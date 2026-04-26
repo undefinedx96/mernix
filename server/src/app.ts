@@ -34,6 +34,7 @@ import {
 } from './routes/index.ts'
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
+import { errorHandler } from './middlewares/error.middleware.ts'
 
 const swaggerDocument = YAML.load('./swaggerDoc.yaml');
 
@@ -49,5 +50,7 @@ app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/healthcheck', healthCheckRouter);
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+app.use(errorHandler);
 
 export { app }
