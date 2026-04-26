@@ -121,5 +121,6 @@ dist
 
 mernix.postman_collection.json
 swaggerDoc.yaml
+traffic-policies.yaml
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Node
