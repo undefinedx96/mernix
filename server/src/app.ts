@@ -33,10 +33,19 @@ import {
     videoRouter,
 } from './routes/index.ts'
 import swaggerUi from 'swagger-ui-express'
-import YAML from 'yamljs'
+import yaml from 'js-yaml'
+import fs from 'node:fs'
 import { errorHandler } from './middlewares/error.middleware.ts'
 
-const swaggerDocument = YAML.load('./swaggerDoc.yaml');
+let swaggerDocument;
+
+try {
+    swaggerDocument = yaml.load(fs.readFileSync('./swaggerDoc.yaml', 'utf-8'));
+    // console.log('SwaggerDocument: ', swaggerDocument);
+}
+catch (error) {
+    console.error('Failed to load SwaggerDocument', error);
+}
 
 
 app.use('/api/v1/users', userRouter);
@@ -49,7 +58,12 @@ app.use('/api/v1/playlists', playlistRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/healthcheck', healthCheckRouter);
 
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+if (swaggerDocument) {
+    app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+}
+else {
+    console.warn('SwaggerDocument does not exist');
+}
 
 app.use(errorHandler);
 
