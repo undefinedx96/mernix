@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { ApiError } from '../utils/ApiError.ts';
 
 const errorHandler = (
-    err: unknown,
+    err: any,
     req: Request,
     res: Response,
     next: NextFunction
