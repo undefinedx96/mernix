@@ -1,22 +1,46 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
+import { useThemeStore } from './store/themeStore.ts'
+import { Sun, Moon } from 'lucide-react'
 
-const App = () => {
+function App() {
+    const { isDarkMode, toggleTheme } = useThemeStore();
 
-  const [count, setCount] = useState(0);
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+        }
+        else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [isDarkMode]);
 
-  const handleClick = () => {
-    setCount(count + 1);
-  };
+    return (
+        <div className='min-h-screen transition-colors duration-300 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white flex flex-col items-center justify-center'>
+            
+            <h1 className='text-4xl font-bold mb-6'>
+                {isDarkMode ? 'Dark' : 'Light'}{' '}Mode
+            </h1>
 
-  return (
-    <div>
-      <p>count is {count}</p>
-      <button
-        className='bg-green-200 px-4 py-2 cursor-pointer'
-        onClick={handleClick}
-      >+</button>
-    </div>
-  )
+            <button
+                onClick={toggleTheme}
+                className='px-3 py-3 rounded-full font-medium flex items-center gap-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:opacity-90 transition-all active:scale-95 shadow-lg cursor-pointer'
+            >
+                {isDarkMode ? (
+                    <>
+                        <Sun size={20} />
+                    </>
+                ) : (
+                    <>
+                        <Moon size={20} />
+                    </>
+                )}
+            </button>
+
+            <p className='mt-4 text-zinc-500 dark:text-zinc-400'>
+                Learning Zustand
+            </p>
+        </div>
+    )
 }
 
 export default App
