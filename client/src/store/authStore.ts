@@ -6,10 +6,10 @@ import { devtools } from 'zustand/middleware'
 
 interface AuthState {
     user: User | null;
-    accessToken: string | null;
     isAuthenticated: boolean;
-    setAuth: (user: User, token: string) => void;
-    setAccessToken: (token: string) => void;
+    isLoginModalOpen: boolean;
+    setAuth: (user: User) => void;
+    setLoginModalOpen: (open: boolean) => void;
     logout: () => void;
 }
 
@@ -19,30 +19,29 @@ export const useAuthStore = create<AuthState>()(
     devtools(
         (set) => ({
             user: null,
-            accessToken: null,
             isAuthenticated: false,
-            setAuth: (user, token) => set(
+            isLoginModalOpen: false,
+            setAuth: (user) => set(
                 {
                     user,
-                    accessToken: token,
-                    isAuthenticated: true
+                    isAuthenticated: true,
+                    isLoginModalOpen: false
                 },
                 false,
                 'setAuth'
             ),
-            setAccessToken: (token) => set(
+            setLoginModalOpen: (open) => set(
                 {
-                    accessToken: token,
-                    isAuthenticated: true
+                    isLoginModalOpen: open
                 },
                 false,
-                'setAccessToken'
+                'setLoginModalOpen'
             ),
             logout: () => set(
                 {
                     user: null,
-                    accessToken: null,
-                    isAuthenticated: false
+                    isAuthenticated: false,
+                    isLoginModalOpen: false
                 },
                 false,
                 'logout'
