@@ -1,7 +1,8 @@
 import { Menu, Search, Video, Bell, UserCircle, Sun, Moon } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore.ts'
 import { useThemeStore } from '../../store/themeStore.ts'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { useState, type SubmitEvent } from 'react'
 
 
 
@@ -15,6 +16,16 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 
 	const { isAuthenticated, user, setLoginModalOpen } = useAuthStore();
 	const { isDarkMode, toggleTheme } = useThemeStore();
+
+	const [searchQuery, setSearchQuery] = useState('');
+	const navigate = useNavigate();
+
+	const handleSearch = (e: SubmitEvent) => {
+		e.preventDefault();
+		if (searchQuery?.trim()) {
+			navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+		}
+	};
 
 	return (
 		<nav className='h-16 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center justify-between px-4 sticky top-0 z-50'>
@@ -41,9 +52,11 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 
 			{/* Center: Search */}
 			<div className='hidden md:flex flex-1 max-w-xl mx-8'>
-				<div className='relative w-full'>
+				<form onSubmit={handleSearch} className='relative w-full'>
 					<input
-						type='text'
+						type='search'
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
 						placeholder='Search videos...'
 						className='w-full bg-zinc-100 dark:bg-zinc-900 border border-transparent focus:border-purple-600/50 rounded-full py-2 px-10 outline-none transition-all'
 					/>
@@ -51,7 +64,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 						className='absolute left-3 top-2.5 text-zinc-400'
 						size={18}
 					/>
-				</div>
+				</form>
 			</div>
 
 			{/* Right: Actions */}
