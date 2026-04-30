@@ -14,19 +14,19 @@ const api: AxiosInstance = axios.create({
 
 
 
-// req. interceptor only needed for body/header token strategy (no plans to use it)
-api.interceptors.request.use(
-    (config) => {
-        const token = useAuthStore.getState().accessToken;
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
+// // req. interceptor only needed for body/header token strategy (no plans to use it)
+// api.interceptors.request.use(
+//     (config) => {
+//         const token = useAuthStore.getState().accessToken;
+//         if (token) {
+//             config.headers.Authorization = `Bearer ${token}`;
+//         }
+//         return config;
+//     },
+//     (error) => {
+//         return Promise.reject(error);
+//     }
+// );
 
 
 
@@ -34,6 +34,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        if (error.response?.status === 401) {
+            const { logout, setLoginModalOpen } = useAuthStore.getState();
+
+            logout();
+            setLoginModalOpen(true);
+        }
         return Promise.reject(error);
     }
 );
