@@ -34,7 +34,11 @@ export const authService = {
 
     // ======= 2. Profile management =======
     getCurrentUser: async (): Promise<AuthResponse<User>> => {
-        const response = await api.get<AuthResponse<User>>('/users/get-current-user');
+        const response = await api.get<AuthResponse<User>>('/users/get-current-user', {
+            headers: {
+                'X-Skip-Auth-Modal': 'true'
+            }
+        });
         return response.data;
     },
 
