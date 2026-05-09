@@ -5,7 +5,7 @@ import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
 import type { ChangeCurrentPasswordBody, LoginReqBody, RegisterReqBody, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
-import { options } from '../constants.ts'
+import { accessTokenCookieOptions, refreshTokenCookieOptions } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
 import mongoose from 'mongoose'
@@ -137,8 +137,8 @@ const loginUser = asyncHandler(async (req: Request<{}, {}, LoginReqBody>, res: R
 
     return res
     .status(200)
-    .cookie('accessToken', accessToken, options)
-    .cookie('refreshToken', refreshToken, {...options, maxAge: 7 * 24 * 60 * 60 * 1000})
+    .cookie('accessToken', accessToken, accessTokenCookieOptions)
+    .cookie('refreshToken', refreshToken, refreshTokenCookieOptions)
     .json(
         new ApiResponse(
             200,
@@ -170,8 +170,8 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 
     return res
     .status(200)
-    .clearCookie('accessToken', options)
-    .clearCookie('refreshToken', options)
+    .clearCookie('accessToken', accessTokenCookieOptions)
+    .clearCookie('refreshToken', refreshTokenCookieOptions)
     .json(
         new ApiResponse(200, {}, 'User logged out successfully')
     );
@@ -206,8 +206,8 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
     
         return res
         .status(200)
-        .cookie('accessToken', accessToken, options)
-        .cookie('refreshToken', newRefreshToken, {...options, maxAge: 7 * 24 * 60 * 60 * 1000})
+        .cookie('accessToken', accessToken, accessTokenCookieOptions)
+        .cookie('refreshToken', newRefreshToken, refreshTokenCookieOptions)
         .json(
             new ApiResponse(
                 200,
