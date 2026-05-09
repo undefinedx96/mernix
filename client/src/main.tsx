@@ -3,7 +3,14 @@ import './index.css'
 import App from './App.tsx'
 import { Suspense } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
-import { Home, DashboardLayout } from './pages/index.ts'
+import { Home, Login } from './pages/index.ts'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AuthProvider } from './providers/AuthProvider.tsx'
+import { AuthLayout, DashboardLayout } from './components/layouts/index.ts'
+
+
+
+const queryClient = new QueryClient();
 
 
 const router = createBrowserRouter([
@@ -29,14 +36,14 @@ const router = createBrowserRouter([
           // }
         ]
       },
-      // {
-      //   path: 'login',
-      //   element: (
-      //     <AuthLayout authentication={false}>
-      //       <Suspense><Login /></Suspense>
-      //     </AuthLayout>
-      //   )
-      // },
+      {
+        path: 'login',
+        element: (
+          <AuthLayout authentication={false}>
+            <Suspense><Login /></Suspense>
+          </AuthLayout>
+        )
+      },
       {
         path: '*',
         element: <Navigate to='/' replace />
@@ -46,5 +53,9 @@ const router = createBrowserRouter([
 ]);
 
 createRoot(document.getElementById('root')!).render(
-  <RouterProvider router={router} />
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  </QueryClientProvider>
 )
