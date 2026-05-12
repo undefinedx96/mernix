@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form'
 import { useLogin } from '../hooks/useLogin.ts'
 import type { LoginData } from '../types/types.ts'
 import { Link } from 'react-router'
+import { Video } from 'lucide-react'
 
 
 
@@ -22,6 +23,9 @@ const Login = () => {
 			<section className='flex items-center justify-center min-h-[80vh] p-4'>
 				<div className='w-full max-w-md p-8 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl'>
 					<div className='text-center mb-8'>
+						<Link to='/' className='size-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-purple-500/40 rotate-3 hover:rotate-0 transition-all duration-300'>
+							<Video className='text-white fill-current' size={32} />
+						</Link>
 						<h2 className='text-3xl font-bold tracking-tight'>
 							Sign In
 						</h2>

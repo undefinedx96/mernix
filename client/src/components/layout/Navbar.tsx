@@ -55,6 +55,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 				<form onSubmit={handleSearch} className='relative w-full'>
 					<input
 						type='search'
+						title='Search videos...'
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						placeholder='Search videos...'

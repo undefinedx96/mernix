@@ -117,6 +117,7 @@ const SidebarItem = ({ item, isOpen}: SidebarItemProps) => {
 	return (
 		<NavLink
 			to={item.slug}
+			title={item.name}
             onClick={handleClick}
 			className={cn(
 					'flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 group',
