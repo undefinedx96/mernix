@@ -61,6 +61,7 @@ const LoginModal = () => {
 				<Link
 					to='/register'
 					className='mt-6 text-xs text-zinc-400 block'
+					onClick={() => setLoginModalOpen(false)}
 				>
 					New here?{' '}
 					<span className='text-purple-500 cursor-pointer hover:underline font-medium'>
