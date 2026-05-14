@@ -55,6 +55,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 				<form onSubmit={handleSearch} className='relative w-full'>
 					<input
 						type='search'
+						title='Search videos...'
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						placeholder='Search videos...'
@@ -93,6 +94,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 							}
 							className='w-9 h-9 rounded-full border-2 border-purple-500 shadow-sm object-cover cursor-pointer hover:opacity-80 transition-opacity'
 							alt='profile'
+							title={`${user?.firstName} ${user?.lastName}`}
 						/>
 					</div>
 				) : (

@@ -58,4 +58,9 @@ export interface ChannelProfile extends Pick<User, '_id' | 'firstName' | 'lastNa
     isSubscribed: boolean;
 }
 
+export type RegisterData = Pick<Required<User>, 'username' | 'email' | 'firstName' | 'lastName' | 'password'> & {
+    avatar: FileList;
+    coverImage?: FileList;
+};
+
 // ========= Utility based types =========
