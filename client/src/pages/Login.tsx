@@ -44,7 +44,7 @@ const Login = () => {
 							</label>
 							<input
                                 id='username'
-								className={`w-full p-3 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-purple-600 transition-all shadow-sm ${errors.userIdentity ? 'focus:ring-red-500' : ''}`}
+								className={`w-full p-3 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-purple-600 transition-all shadow-sm ${errors.userIdentity ? 'focus:ring-red-500 shadow-md shadow-red-500/30' : ''}`}
 								placeholder='username / email'
 								{...register('userIdentity', {
 									required:
@@ -66,14 +66,13 @@ const Login = () => {
 							<input
                                 id='password'
 								type='password'
-								className={`w-full p-3 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-purple-600 transition-all shadow-sm ${errors.userIdentity ? 'focus:ring-red-500' : ''}`}
+								className={`w-full p-3 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-purple-600 transition-all shadow-sm ${errors.userIdentity ? 'focus:ring-red-500 shadow-md shadow-red-500/30' : ''}`}
 								placeholder='••••••••'
 								{...register('password', {
 									required: 'Password is required',
 									minLength: {
 										value: 6,
-										message:
-											'At least 6 characters required',
+										message: 'At least 6 characters required',
 									},
 								})}
 							/>
@@ -87,7 +86,7 @@ const Login = () => {
 						<button
 							type='submit'
 							disabled={isPending}
-							className='w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20'
+							className={`w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20 cursor-pointer ${isPending ? 'active:scale-none' : ''}`}
 						>
 							{isPending ? 'Authenticating...' : 'Sign In'}
 						</button>
