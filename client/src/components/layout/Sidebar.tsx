@@ -85,7 +85,7 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
 			<aside
 				className={cn(
 					// global shared properties
-					'top-16 h-[calc(100vh-64px)] overflow-y-auto bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-in-out z-40',
+					'top-16 h-[calc(100vh-64px)] overflow-y-auto bg-white dark:bg-zinc-950 transition-all duration-300 ease-in-out z-40',
 
 					// mobile-first hidden layout defaults
 					'fixed -left-full w-64 shadow-2xl',
