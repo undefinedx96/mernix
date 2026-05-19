@@ -30,6 +30,17 @@ export interface Video {
     updatedAt: string;
 }
 
+export interface ConfirmationModalProps {
+	isOpen: boolean;
+	onClose: () => void;
+	onConfirm: () => void;
+	title: string;
+	description: string;
+	confirmText?: string;
+	cancelText?: string;
+	isPending?: boolean;
+}
+
 export interface AuthResponse<T> {
     statusCode: number;
     data: T;
