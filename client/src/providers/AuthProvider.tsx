@@ -12,8 +12,10 @@ interface Children {
 
 export const AuthProvider = ({ children }: Children) => {
     const setAuth = useAuthStore((state) => state.setAuth);
+    const initializeGuest = useAuthStore((state) => state.initializeGuest);
+    const isAuthInitialized = useAuthStore((state) => state.isAuthInitialized);
 
-    const { data, isLoading, isSuccess } = useQuery({
+    const { data, isSuccess, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: authService.getCurrentUser,
         retry: false,
@@ -26,11 +28,14 @@ export const AuthProvider = ({ children }: Children) => {
         if (isSuccess && data?.data) {
             setAuth(data.data);
         }
-    }, [isSuccess, data, setAuth]);
+        else if (isError) {
+            initializeGuest();
+        }
+    }, [isSuccess, isError, data, setAuth, initializeGuest]);
 
-    if (isLoading) {
+    if (!isAuthInitialized) {
         return (
-            <div className='flex items-center justify-center h-screen'>
+            <div className='flex items-center justify-center h-screen bg-white dark:bg-zinc-950 transition-colors duration-300'>
                 <Commet color={['#6004a7', '#7d05d9', '#9717fa', '#ad49fb']} />
             </div>
         );
