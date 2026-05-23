@@ -152,10 +152,10 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 												{user?.firstName}{' '}{user?.lastName}
 											</p>
 											<Link
-												to={`/c/@${user?.username}`} className='text-xs text-zinc-500 dark:text-zinc-400 truncate hover:text-purple-600 dark:hover:text-purple-500'
-												title={`@${user?.username}`}
+												to={`/c/${user?.username}`} className='text-xs text-zinc-500 dark:text-zinc-400 truncate hover:text-purple-600 dark:hover:text-purple-500'
+												title={user?.username}
 											>
-												@{user?.username}
+												{user?.username}
 											</Link>
 										</div>
 									</div>
@@ -163,10 +163,10 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 									{/* options list */}
 									<div className='p-1.5 space-y-0.5'>
 										<Link
-											to={`/c/@${user?.username || ''}`}
+											to={`/c/${user?.username || ''}`}
 											onClick={() => setIsDropdownOpen(false)}
 											className='flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors group'
-											title={`Your Channel: @${user?.username}`}
+											title={`Your Channel: ${user?.username}`}
 										>
 											<User
 												size={18}
