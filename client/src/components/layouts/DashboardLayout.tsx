@@ -15,7 +15,7 @@ const DashboardLayout = () => {
 			<div className='flex flex-1 overflow-hidden'>
 				<Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
-				<main className='flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-950/50 scroll-smooth w-full'>
+				<main className='flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-950/50 scroll-smooth w-full scrollbar-thin'>
 					<Outlet />
 				</main>
 			</div>

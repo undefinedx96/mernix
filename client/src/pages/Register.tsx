@@ -63,7 +63,7 @@ const Register = () => {
 
 	return (
 		<>
-			<title>Mernix | Register</title>
+			<title>Register | Mernix</title>
 
 			<section className='flex items-center justify-center min-h-screen p-4 text-zinc-900 dark:text-white bg-white dark:bg-zinc-950'>
 				<div className='w-full max-w-2xl bg-zinc-50 dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden'>

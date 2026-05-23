@@ -63,7 +63,7 @@ export interface ChangePasswordData {
     newPassword: string;
 }
 
-export interface ChannelProfile extends Pick<User, '_id' | 'firstName' | 'lastName' | 'username' | 'email' | 'avatar' | 'coverImage'> {
+export interface ChannelProfile extends Pick<User, '_id' | 'firstName' | 'lastName' | 'username' | 'email' | 'avatar' | 'coverImage' | 'createdAt'> {
     subscribersCount: number;
     channelsSubscribedToCount: number;
     isSubscribed: boolean;
