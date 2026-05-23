@@ -510,7 +510,8 @@ const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) =
                 isSubscribed: 1,
                 avatar: 1,
                 coverImage: 1,
-                email: 1
+                email: 1,
+                createdAt: 1
             }
         }
     ]);
