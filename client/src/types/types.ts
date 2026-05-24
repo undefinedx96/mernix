@@ -48,6 +48,23 @@ export interface AuthResponse<T> {
     success: boolean;
 }
 
+export interface ValidationError {
+    field?: string;
+    message: string;
+}
+
+export interface ApiErrorResponse {
+    statusCode: number;
+    success: boolean;
+    message: string;
+    errors: ValidationError[];
+    data: null;
+}
+
+export interface ToastId {
+    toastId: string;
+}
+
 // ========= Utility based types =========
 
 export type LoginData = Pick<User, 'password'> & {
