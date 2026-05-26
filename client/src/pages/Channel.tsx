@@ -3,6 +3,7 @@ import { useChannelProfile } from '../hooks/useChannelProfile.ts'
 import { Commet } from 'react-loading-indicators'
 import { Grid, ListVideo, User as UserIcon, Edit, UserPlus, Calendar } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { useNavigate } from 'react-router'
 
 
 
@@ -11,6 +12,8 @@ const Channel = () => {
 	const { channel, isLoading, isError, isOwner, username, error } = useChannelProfile();
 
 	const [activeTab, setActiveTab] = useState<'videos' | 'playlists' | 'about'>('videos');
+
+	const navigate = useNavigate();
 
 	if (isLoading) {
 		return (
@@ -118,6 +121,7 @@ const Channel = () => {
 							<button
                                 className='flex items-center gap-2 bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 font-semibold px-4 py-2 rounded-xl text-sm transition-all duration-200 active:scale-95 cursor-pointer'
                                 title={isOwner ? 'Customize Channel' : ''}
+								onClick={() => navigate('/settings?tab=account')}
                             >
 								<Edit size={16} />
 								Customize Channel
