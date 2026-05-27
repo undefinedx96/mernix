@@ -65,6 +65,19 @@ export interface ToastId {
     toastId: string;
 }
 
+export interface PaginatedResponse<T> {
+    docs: T[],
+    totalDocs: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    nextPage: number | null;
+    prevPage: number | null;
+    message?: string;
+}
+
 // ========= Utility based types =========
 
 export type LoginData = Pick<User, 'password'> & {
@@ -90,5 +103,11 @@ export type RegisterData = Pick<Required<User>, 'username' | 'email' | 'firstNam
     avatar: FileList;
     coverImage?: FileList;
 };
+
+export type WatchHistoryVideoOwner = Pick<User, '_id' | 'firstName' | 'lastName' | 'username' | 'avatar'>;
+
+export interface WatchHistoryVideoItem extends Omit<Video, 'owner'> {
+    owner: WatchHistoryVideoOwner;
+}
 
 // ========= Utility based types =========
