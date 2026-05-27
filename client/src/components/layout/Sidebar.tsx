@@ -30,10 +30,17 @@ interface SidebarItemProps {
 
 
 const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
+
+	const { user } = useAuthStore();
+
 	const menuGroups: MenuGroup[] = [
 		{
 			items: [
-				{ name: 'Home', icon: Home, slug: '/' },
+				{
+					name: 'Home',
+					icon: Home,
+					slug: '/'
+				},
 				{
 					name: 'Subscriptions',
 					icon: PlaySquare,
@@ -44,22 +51,45 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
 		{
 			title: 'You',
 			items: [
-				{ name: 'Your Channel', icon: UserSquare, slug: '/:channelId' },
+				{
+					name: 'Your Channel',
+					icon: UserSquare,
+					slug: `/c/${user?.username}`
+				},
 				{
 					name: 'Watch History',
 					icon: History,
 					slug: '/watch-history',
 				},
-				{ name: 'Liked Videos', icon: ThumbsUp, slug: '/liked' },
-				{ name: 'Playlists', icon: MenuSquare, slug: '/playlists' },
+				{
+					name: 'Liked Videos',
+					icon: ThumbsUp, slug: '/liked'
+				},
+				{
+					name: 'Playlists',
+					icon: MenuSquare,
+					slug: '/playlists'
+				},
 			],
 		},
 		{
 			title: 'Explore',
 			items: [
-				{ name: 'Trending', icon: Flame, slug: '/trending' },
-				{ name: 'Gaming', icon: Gamepad2, slug: '/gaming' },
-				{ name: 'Sports', icon: Trophy, slug: '/sports' },
+				{
+					name: 'Trending',
+					icon: Flame,
+					slug: '/trending'
+				},
+				{
+					name: 'Gaming',
+					icon: Gamepad2,
+					slug: '/gaming'
+				},
+				{
+					name: 'Sports',
+					icon: Trophy,
+					slug: '/sports'
+				},
 			],
 		},
 	];

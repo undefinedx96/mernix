@@ -136,7 +136,7 @@ const ProfileSettings = () => {
 
 	return (
 		<>
-			<title>Mernix | Dashboard Settings</title>
+			<title>Dashboard Settings | Mernix</title>
 
 			<div className='max-w-6xl mx-auto px-4 md:px-8 py-10 w-full text-zinc-950 dark:text-zinc-50 animate-in fade-in duration-200'>
 				<h1 className='text-3xl font-extrabold tracking-tight mb-2'>
