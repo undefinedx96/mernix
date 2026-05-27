@@ -4,12 +4,13 @@ import { User } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { ChangeCurrentPasswordBody, LoginReqBody, RegisterReqBody, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
+import type { ChangeCurrentPasswordBody, GetAllVideosQueryType, LoginReqBody, RegisterReqBody, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
-import mongoose from 'mongoose'
+import mongoose, { type PipelineStage } from 'mongoose'
 import type { ChannelProfileDataResponseObj, WatchHistoryVideoDataResponseObj } from '../types/aggregation.types.ts'
+import { Video } from '../models/video.model.ts'
 
 
 
@@ -532,61 +533,148 @@ const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) =
 
 
 
-const getWatchHistory = asyncHandler(async (req: Request, res: Response) => {
+// const getWatchHistory = asyncHandler(async (req: Request, res: Response) => {
 
-    const user = await User.aggregate<{watchHistory: WatchHistoryVideoDataResponseObj}>([
+//     const user = await User.aggregate<{watchHistory: WatchHistoryVideoDataResponseObj}>([
+//         {
+//             $match: {
+//                 _id: new mongoose.Types.ObjectId(req.user?._id)
+//             }
+//         },
+//         {
+//             $lookup: {
+//                 from: 'videos',
+//                 localField: 'watchHistory',
+//                 foreignField: '_id',
+//                 as: 'watchHistory',
+//                 pipeline: [
+//                     {
+//                         $lookup: {
+//                             from: 'users',
+//                             localField: 'owner',
+//                             foreignField: '_id',
+//                             as: 'owner',
+//                             pipeline: [
+//                                 {
+//                                     $project: {
+//                                         firstName: 1,
+//                                         lastName: 1,
+//                                         username: 1,
+//                                         avatar: 1
+//                                     }
+//                                 }
+//                             ]
+//                         }
+//                     },
+//                     {
+//                         $addFields: {
+//                             owner: {
+//                                 $first: '$owner'
+//                             }
+//                         }
+//                     }
+//                 ]
+//             }
+//         }
+//     ]);
+
+//     if (!user.length) {
+//         throw new ApiError(404, 'User does not exist');
+//     }
+
+//     // console.log('User with watch history: ', user[0]?.watchHistory);
+
+//     return res
+//     .status(200)
+//     .json(
+//         new ApiResponse(200, user[0]?.watchHistory, 'Watch history fetched successfully')
+//     );
+// });
+
+
+
+
+const getWatchHistory = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+
+    const { page = '1', limit = '10' } = req.query;
+
+    const user = await User.findById(req.user?._id).select('watchHistory');
+
+    if (!user) {
+        throw new ApiError(404, 'User does not exist');
+    }
+
+    const historyIds = user.watchHistory || [];
+    // console.log(historyIds);
+
+    if (historyIds.length === 0) {
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, {
+                docs: [],
+                totalDocs: 0,
+                page: parseInt(page, 10),
+                limit: parseInt(limit, 10),
+                totalPages: 1,
+                hasNextPage: false,
+                hasPrevPage: false
+            }, 'Watch history is empty')
+        );
+    }
+
+    const pipeline: PipelineStage[] = [
         {
             $match: {
-                _id: new mongoose.Types.ObjectId(req.user?._id)
+                _id: { $in: historyIds }
+            }
+        },
+        {
+            $addFields: {
+                watchIndex: {
+                    $indexOfArray: [historyIds, '$_id']
+                }
+            }
+        },
+        {
+            $sort: {
+                watchIndex: -1
             }
         },
         {
             $lookup: {
-                from: 'videos',
-                localField: 'watchHistory',
+                from: 'users',
+                localField: 'owner',
                 foreignField: '_id',
-                as: 'watchHistory',
+                as: 'owner',
                 pipeline: [
                     {
-                        $lookup: {
-                            from: 'users',
-                            localField: 'owner',
-                            foreignField: '_id',
-                            as: 'owner',
-                            pipeline: [
-                                {
-                                    $project: {
-                                        firstName: 1,
-                                        lastName: 1,
-                                        username: 1,
-                                        avatar: 1
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        $addFields: {
-                            owner: {
-                                $first: '$owner'
-                            }
+                        $project: {
+                            firstName: 1,
+                            lastName: 1,
+                            username: 1,
+                            avatar: 1
                         }
                     }
                 ]
             }
+        },
+        {
+            $unwind: '$owner'
         }
-    ]);
+    ];
 
-    if (!user.length) {
-        throw new ApiError(404, 'User does not exist');
-    }
+    const videoAggregate = Video.aggregate(pipeline);
 
-    // console.log('User with watch history: ', user[0]?.watchHistory);
+    const paginatedWatchHistory = await Video.aggregatePaginate<WatchHistoryVideoDataResponseObj>(videoAggregate, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10)
+    });
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200, user[0]?.watchHistory, 'Watch history fetched successfully')
+        new ApiResponse(200, paginatedWatchHistory, 'Watch history fetched successfully')
     );
 });
 

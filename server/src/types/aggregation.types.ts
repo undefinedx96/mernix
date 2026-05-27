@@ -7,7 +7,13 @@ interface BaseResponse {
 
 export interface VideoOwnerDataResponseObj extends BaseResponse, Pick<IUser, 'firstName' | 'lastName' | 'username' | 'avatar'> {}
 
-export interface VideoDetailDataResponseObj extends BaseResponse, Omit<IVideo, '_id' | 'owner'> {
+export interface BaseVideoDetailObj extends BaseResponse, Omit<IVideo, '_id' | 'owner'> {
+    owner: VideoOwnerDataResponseObj;
+}
+
+export interface WatchHistoryVideoDataResponseObj extends  BaseVideoDetailObj {}
+
+export interface VideoDetailDataResponseObj extends BaseVideoDetailObj {
     // _id: string;
     // videoFile: string;
     // videoFilePublicId: string;
@@ -18,7 +24,7 @@ export interface VideoDetailDataResponseObj extends BaseResponse, Omit<IVideo, '
     // duration: number;
     // views: number;
     // isPublished: boolean;
-    owner: VideoOwnerDataResponseObj;
+    // owner: VideoOwnerDataResponseObj;
     likesCount: number;
     isLiked: boolean;
     // createdAt: string;
@@ -36,20 +42,6 @@ export interface ChannelProfileDataResponseObj extends BaseResponse, Pick<IUser,
     channelsSubscribedToCount: number;
     isSubscribed: boolean;
 }
-
-export interface WatchHistoryVideoDataResponseObj extends VideoDetailDataResponseObj {}
-// {
-//     _id: string;
-//     videoFile: string;
-//     thumbnail: string;
-//     title: string;
-//     description: string;
-//     duration: number;
-//     views: number;
-//     createdAt: string;
-//     updatedAt: string;
-//     owner: VideoOwnerDataResponseObj;
-// }
 
 export interface PaginatedPlaylistResponse {
     playlistArr: VideoDetailDataResponseObj[];
