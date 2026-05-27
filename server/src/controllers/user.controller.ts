@@ -604,7 +604,7 @@ const getWatchHistory = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideo
     }
 
     const historyIds = user.watchHistory || [];
-    console.log(historyIds);
+    // console.log(historyIds);
 
     if (historyIds.length === 0) {
         return res
