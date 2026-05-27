@@ -80,7 +80,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userIdentity\": \"test1\",\n    \"password\": \"123456\"\n}",
+							"raw": "{\n    \"userIdentity\": \"pgtest1\",\n    \"password\": \"123456\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
