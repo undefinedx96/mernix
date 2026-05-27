@@ -1,22 +1,33 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
+import { useThemeStore } from './store/themeStore.ts'
+import { Toaster } from 'react-hot-toast'
+import LoginModal from './components/auth/LoginModal.tsx'
+import { Outlet } from 'react-router'
+
+
 
 const App = () => {
+    
+    const { isDarkMode } = useThemeStore();
 
-  const [count, setCount] = useState(0);
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+        }
+        else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [isDarkMode]);
 
-  const handleClick = () => {
-    setCount(count + 1);
-  };
+    return (
+        <div className='min-h-screen transition-colors duration-300 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white'>
+            <Toaster position='bottom-right' />
 
-  return (
-    <div>
-      <p>count is {count}</p>
-      <button
-        className='bg-green-200 px-4 py-2 cursor-pointer'
-        onClick={handleClick}
-      >+</button>
-    </div>
-  )
+            <LoginModal />
+
+            <Outlet />
+        </div>
+    )
 }
 
 export default App

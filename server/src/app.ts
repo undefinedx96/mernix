@@ -59,7 +59,7 @@ app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/healthcheck', healthCheckRouter);
 
 if (swaggerDocument) {
-    app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 }
 else {
     console.warn('SwaggerDocument does not exist');

@@ -31,7 +31,7 @@ export interface VideoDetailDataResponseObj extends BaseVideoDetailObj {
     // updatedAt: string;
 }
 
-export interface ChannelProfileDataResponseObj extends BaseResponse, Pick<IUser, 'firstName' | 'lastName' | 'username' | 'email' | 'avatar' | 'coverImage'> {
+export interface ChannelProfileDataResponseObj extends BaseResponse, Pick<IUser, 'firstName' | 'lastName' | 'username' | 'email' | 'avatar' | 'coverImage' | 'createdAt'> {
     // firstName: string;
     // lastName: string;
     // username: string;
