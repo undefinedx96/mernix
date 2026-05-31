@@ -619,7 +619,7 @@ const getWatchHistory = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideo
                 totalPages: 1,
                 hasNextPage: false,
                 hasPrevPage: false
-            }, 'Watch history is empty')
+            }, 'Watch history is currently empty')
         );
     }
 

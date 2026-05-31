@@ -1,4 +1,4 @@
-import type { AuthResponse, ChangePasswordData, ChannelProfile, LoginData, UpdateAccountData, User, Video } from '../types/types.ts'
+import type { AuthResponse, ChangePasswordData, ChannelProfile, LoginData, PaginatedResponse, UpdateAccountData, User, WatchHistoryVideoItem } from '../types/types.ts'
 import api from './api.ts'
 
 
@@ -81,9 +81,18 @@ export const authService = {
         return response.data;
     },
     
-    getWatchHistory: async (): Promise<AuthResponse<Video[]>> => {
-        const response = await api.get<AuthResponse<Video[]>>('users/get-watch-history');
-        return response.data;
+    // getWatchHistory: async (): Promise<AuthResponse<Video[]>> => {
+    //     const response = await api.get<AuthResponse<Video[]>>('users/get-watch-history');
+    //     return response.data;
+    // },
+
+    getWatchHistory: async (page = 1, limit = 10): Promise<PaginatedResponse<WatchHistoryVideoItem>> => {
+        const response = await api.get<AuthResponse<PaginatedResponse<WatchHistoryVideoItem>>>(`/users/get-watch-history?page=${page}&limit=${limit}`);
+        
+        if (response.data.data) {
+            response.data.data.message = response.data.message;
+        }
+        return response.data.data;
     }
     // ======= 4. Channel & history =======
 };
