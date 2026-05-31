@@ -6,10 +6,12 @@ import { devtools } from 'zustand/middleware'
 
 interface AuthState {
     user: User | null;
-    accessToken: string | null;
     isAuthenticated: boolean;
-    setAuth: (user: User, token: string) => void;
-    setAccessToken: (token: string) => void;
+    isAuthInitialized: boolean;
+    isLoginModalOpen: boolean;
+    setAuth: (user: User) => void;
+    initializeGuest: () => void;
+    setLoginModalOpen: (open: boolean) => void;
     logout: () => void;
 }
 
@@ -19,30 +21,40 @@ export const useAuthStore = create<AuthState>()(
     devtools(
         (set) => ({
             user: null,
-            accessToken: null,
             isAuthenticated: false,
-            setAuth: (user, token) => set(
+            isAuthInitialized: false,
+            isLoginModalOpen: false,
+            setAuth: (user) => set(
                 {
                     user,
-                    accessToken: token,
-                    isAuthenticated: true
+                    isAuthenticated: true,
+                    isAuthInitialized: true,
+                    isLoginModalOpen: false
                 },
                 false,
                 'setAuth'
             ),
-            setAccessToken: (token) => set(
+            initializeGuest: () => set(
                 {
-                    accessToken: token,
-                    isAuthenticated: true
+                    user: null,
+                    isAuthenticated: false,
+                    isAuthInitialized: true
                 },
                 false,
-                'setAccessToken'
+                'initializeGuest'
+            ),
+            setLoginModalOpen: (open) => set(
+                {
+                    isLoginModalOpen: open
+                },
+                false,
+                'setLoginModalOpen'
             ),
             logout: () => set(
                 {
                     user: null,
-                    accessToken: null,
-                    isAuthenticated: false
+                    isAuthenticated: false,
+                    isLoginModalOpen: false
                 },
                 false,
                 'logout'
