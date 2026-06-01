@@ -78,6 +78,35 @@ export interface PaginatedResponse<T> {
     message?: string;
 }
 
+export interface GetVideosQueryParams {
+    page?: number;
+    limit?: number;
+    searchQuery?: string;
+    sortBy?: string;
+    sortType?: 'asc' | 'desc';
+    userId?: string;
+}
+
+export interface PublishVideoPayload {
+    title: string;
+    description: string;
+    videoFile: File;
+    thumbnail: File;
+}
+
+export interface UpdateVideoPayload {
+    title: string;
+    description: string;
+    thumbnail?: File;
+}
+
+export interface TogglePublishStatusResponse {
+    videoId: string;
+    isPublished: boolean;
+}
+
+export type VideoIdStr = string;
+
 // ========= Utility based types =========
 
 export type LoginData = Pick<User, 'password'> & {
@@ -108,6 +137,18 @@ export type WatchHistoryVideoOwner = Pick<User, '_id' | 'firstName' | 'lastName'
 
 export interface WatchHistoryVideoItem extends Omit<Video, 'owner'> {
     owner: WatchHistoryVideoOwner;
+}
+
+export type VideoOwnerDetails = Pick<User, '_id' | 'firstName' | 'lastName' | 'username' | 'avatar'>;
+
+export interface VideoFeedItem extends Omit<Video, 'owner'> {
+    owner: VideoOwnerDetails;
+}
+
+export interface VideoDetailsResponse extends Omit<Video, 'owner'> {
+    owner: VideoOwnerDetails;
+    likesCount: boolean;
+    isLiked: boolean;
 }
 
 // ========= Utility based types =========
