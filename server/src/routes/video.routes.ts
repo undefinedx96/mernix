@@ -5,8 +5,8 @@ import { deleteVideo, getAllVideos, getVideoById, publishAVideo, togglePublishSt
 
 const videoRouter = Router();
 
-videoRouter.use(verifyJWT);
 videoRouter.route('/get-videos').get(getAllVideos);
+videoRouter.use(verifyJWT);
 videoRouter.route('/publish-video').post(
     upload.fields([
         {

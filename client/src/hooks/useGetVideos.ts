@@ -10,7 +10,7 @@ import { videoService } from '../api/video.service.ts'
 
 export const useGetVideos = (filters: GetVideosQueryParams = {}) => {
     
-    const { searchQuery, userId, sortBy, sortType, limit = 12 } = filters;
+    const { searchQuery, userId, sortBy, sortType, limit = 10 } = filters;
 
     return useInfiniteQuery<PaginatedResponse<VideoFeedItem>, Error>({
         queryKey: ['videos', { searchQuery, userId, sortBy, sortType, limit }],
