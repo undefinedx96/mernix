@@ -7,12 +7,12 @@ export const videoService = {
 
     // ====== 1. Feed & Discovery ======
     getVideos: async (params?: GetVideosQueryParams): Promise<PaginatedResponse<VideoFeedItem>> => {
-        const response = await api.get<AuthResponse<PaginatedResponse<VideoFeedItem>>>('/video/get-videos', { params });
+        const response = await api.get<AuthResponse<PaginatedResponse<VideoFeedItem>>>('/videos/get-videos', { params });
         return response.data.data;
     },
 
     getVideoById: async (videoId: string): Promise<AuthResponse<VideoDetailsResponse>> => {
-        const response = await api.get<AuthResponse<VideoDetailsResponse>>(`/video/get-video/${videoId}`);
+        const response = await api.get<AuthResponse<VideoDetailsResponse>>(`/videos/get-video/${videoId}`);
 
         return response.data;
     },
@@ -27,7 +27,7 @@ export const videoService = {
         formData.append('videoFile', videoFile);
         formData.append('thumbnail', thumbnail);
 
-        const response = await api.post<AuthResponse<Video>>('/video/publish-video', formData, {
+        const response = await api.post<AuthResponse<Video>>('/videos/publish-video', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             }
@@ -44,7 +44,7 @@ export const videoService = {
             formData.append('thumbnail', thumbnail);
         }
 
-        const response = await api.patch<AuthResponse<Video>>(`/video/update-video/${videoId}`, formData, {
+        const response = await api.patch<AuthResponse<Video>>(`/videos/update-video/${videoId}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             }
@@ -54,13 +54,13 @@ export const videoService = {
     },
 
     deleteVideo: async (videoId: VideoIdStr): Promise<AuthResponse<Record<string, never>>> => {
-        const response = await api.delete<AuthResponse<Record<string, never>>>(`/video/delete-video/${videoId}`);
+        const response = await api.delete<AuthResponse<Record<string, never>>>(`/videos/delete-video/${videoId}`);
 
         return response.data;
     },
 
     togglePublishStatus: async (videoId: VideoIdStr): Promise<AuthResponse<TogglePublishStatusResponse>> => {
-        const response = await api.patch<AuthResponse<TogglePublishStatusResponse>>(`/video/toggle-publish-status/${videoId}`);
+        const response = await api.patch<AuthResponse<TogglePublishStatusResponse>>(`/videos/toggle-publish-status/${videoId}`);
 
         return response.data;
     }
