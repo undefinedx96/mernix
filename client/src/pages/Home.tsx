@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useGetVideos } from '../hooks/useGetVideos.ts'
 import { useAuthStore } from '../store/authStore.ts'
 import type { VideoFeedItem } from '../types/types.ts'
@@ -71,7 +71,7 @@ const Home = () => {
                 {!isLoading && videos.map((video) => (
                     <div 
                         key={video._id} 
-                        className='flex flex-col gap-3 cursor-pointer group hover:bg-purple-600/10 dark:hover:bg-purple-600/10 duration-300 ease-out transition-colors rounded-3xl p-3 hover:animate-pulse'
+                        className='flex flex-col gap-3 cursor-pointer group hover:bg-purple-600/10 dark:hover:bg-purple-600/10 duration-300 ease-out transition-colors rounded-3xl p-3'
                         title={video.title}
                         onClick={() => {
                             if (!isAuthenticated) {
@@ -107,9 +107,21 @@ const Home = () => {
                                 <h3 className='text-sm font-semibold line-clamp-2 text-zinc-900 dark:text-zinc-100 leading-tight mb-1'>
                                     {video.title}
                                 </h3>
-                                <p className='text-xs text-zinc-500 dark:text-zinc-400 truncate'>
+                                <Link 
+                                    to={`/c/${video.owner.username}`}
+                                    className='text-xs text-zinc-500 dark:text-zinc-400 truncate hover:text-black hover:dark:text-white'
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        if (!isAuthenticated) {
+                                            setLoginModalOpen(true);
+                                            return;
+                                        }
+                                        navigate(`/c/${video.owner.username}`);
+                                    }}
+                                >
                                     {video.owner.firstName}{' '}{video.owner.lastName}
-                                </p>
+                                </Link>
                                 <p
                                     className='text-xs text-zinc-500 dark:text-zinc-400 mt-0.5'
                                     title={`Created on ${new Date(video.createdAt).toDateString()} • ${new Date(video.createdAt).getHours()}:${new Date(video.createdAt).getMinutes()}:${new Date(video.createdAt).getSeconds()}`}

@@ -162,7 +162,7 @@ const WatchHistory = () => {
 
 									{/* Description summary */}
 									<p
-										className='text-xs md:text-sm text-zinc-500 dark:text-zinc-400 mt-3 line-clamp-2 hidden sm:block max-w-2xl font-normal leading-relaxed'
+										className='text-xs md:text-sm text-zinc-500 dark:text-zinc-400 mt-3 truncate hidden sm:block max-w-2xl font-normal leading-relaxed'
 										title={video.description}
 									>
 										{video.description}
