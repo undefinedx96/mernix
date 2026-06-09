@@ -1,7 +1,7 @@
-import { Menu, Search, Video, Bell, UserCircle, Sun, Moon, LogOut, User, Settings } from 'lucide-react'
+import { Menu, Search, Video, Bell, UserCircle, Sun, Moon, LogOut, User, Settings, ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore.ts'
 import { useThemeStore } from '../../store/themeStore.ts'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useState, useRef, useEffect, type SubmitEvent } from 'react'
 import { cn } from '../../utils/cn.ts'
 import { useLogout } from '../../hooks/useLogout.ts'
@@ -21,12 +21,15 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 
 	const { mutate: performLogout, isPending: isLoggingOut } = useLogout();
 
-	const [searchQuery, setSearchQuery] = useState('');
+	const [searchParams] = useSearchParams();
+	const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const navigate = useNavigate();
+	const location = useLocation();
+	const isMobileSearching = location.hash === '#searching';
 
 	// close the dropdown if the user clicks anywhere outside of it
 	useEffect(() => {
@@ -43,14 +46,18 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 			document.addEventListener('mousedown', handleClickOutside);
 		}
 
-		return () =>
-			document.removeEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
 	}, [isDropdownOpen]);
 
 	const handleSearch = (e: SubmitEvent) => {
 		e.preventDefault();
-		if (searchQuery?.trim()) {
-			navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+		
+		const trimmedQuery = searchQuery?.trim();
+		if (trimmedQuery) {
+			navigate(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+		}
+		else {
+			navigate('/');
 		}
 	};
 
@@ -62,6 +69,34 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 			},
 		});
 	};
+
+	if (isMobileSearching) {
+		return (
+			<nav className='h-16 bg-white dark:bg-zinc-950 flex items-center px-4 sticky top-0 z-50 border-b border-zinc-200 dark:border-zinc-900 gap-2 duration-150'>
+				<button
+					onClick={() => navigate(-1)}
+					className='p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-full text-zinc-800 dark:text-zinc-200 cursor-pointer shrink-0'
+					title='Back to browsing'
+				>
+					<ArrowLeft size={22} />
+				</button>
+
+				<form onSubmit={handleSearch} className='relative flex-1'>
+					<input 
+						key={searchParams.get('q') || 'mobile-empty'}
+						type='search'
+						autoFocus
+						title='Search videos...'
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						placeholder='Search videos...'
+						className='w-full bg-zinc-100 dark:bg-zinc-900 border border-transparent focus:border-purple-600/50 rounded-full py-2 px-10 outline-none text-zinc-900 dark:text-zinc-100 transition-all text-sm'
+					/>
+					<Search className='absolute left-3 top-2.5 text-zinc-400' size={18} />
+				</form>
+			</nav>
+		);
+	}
 
 	return (
 		<>
@@ -86,10 +121,11 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 					</Link>
 				</div>
 
-				{/* center: search */}
+				{/* center: search (hidden below 768px) */}
 				<div className='hidden md:flex flex-1 max-w-xl mx-8'>
 					<form onSubmit={handleSearch} className='relative w-full'>
 						<input
+							key={searchParams.get('q') || 'empty'}
 							type='search'
 							title='Search videos...'
 							value={searchQuery}
@@ -103,6 +139,14 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 
 				{/* right: actions */}
 				<div className='flex items-center gap-2 sm:gap-4 relative' ref={dropdownRef}>
+					<button
+						onClick={() => navigate('#searching')}
+						className='flex md:hidden items-center gap-2 text-purple-600 border border-purple-600/30 hover:bg-purple-600/10 dark:border-zinc-800 p-2 rounded-full font-semibold transition-all active:scale-95 cursor-pointer'
+						title='Open search bar'
+					>
+						<Search size={20} />
+					</button>
+
 					<button
 						onClick={toggleTheme}
 						className='flex items-center gap-2 text-purple-700 dark:text-yellow-400 border border-purple-600/20 hover:bg-purple-600/10 dark:border-zinc-800 p-2 rounded-full font-semibold transition-all active:scale-95 cursor-pointer'
