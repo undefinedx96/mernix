@@ -397,24 +397,24 @@ const getAllVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQu
     });
     // console.log('All videos after aggregate Paginate: ', allVideos);
 
-    if (!allVideos || allVideos.docs.length === 0) {
-        return res
-        .status(200)
-        .json(
-            new ApiResponse(200, {
-                docs: [],
-                totalDocs: 0,
-                page: parseInt(page, 10),
-                limit: parseInt(limit, 10),
-                totalPages: 1,
-                pagingCounter: 1,
-                hasNextPage: false,
-                hasPrevPage: false,
-                prevPage: null,
-                nextPage: null,
-            }, 'No videos found matching your criteria')
-        );
-    }
+    // if (!allVideos || allVideos.docs.length === 0) {
+    //     return res
+    //     .status(200)
+    //     .json(
+    //         new ApiResponse(200, {
+    //             docs: [],
+    //             totalDocs: 0,
+    //             page: parseInt(page, 10),
+    //             limit: parseInt(limit, 10),
+    //             totalPages: 1,
+    //             pagingCounter: 1,
+    //             hasNextPage: false,
+    //             hasPrevPage: false,
+    //             prevPage: null,
+    //             nextPage: null,
+    //         }, 'No videos found matching your criteria')
+    //     );
+    // }
 
     return res
     .status(200)
