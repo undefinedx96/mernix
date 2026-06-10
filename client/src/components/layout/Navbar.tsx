@@ -110,7 +110,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
         if (!isSearchFocused || searchHistory.length === 0) return null;
 
         return (
-            <div className='absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl z-50 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-100'>
+            <div className='absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl z-50 overflow-hidden py-2 transition-all duration-200 ease-out origin-top'>
                 <p className='px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase text-zinc-400 dark:text-zinc-500'>
                     Recent Searches
                 </p>
