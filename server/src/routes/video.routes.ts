@@ -5,6 +5,7 @@ import { deleteVideo, getAllVideos, getVideoById, publishAVideo, togglePublishSt
 
 const videoRouter = Router();
 
+videoRouter.route('/get-videos').get(getAllVideos);
 videoRouter.use(verifyJWT);
 videoRouter.route('/publish-video').post(
     upload.fields([
@@ -22,7 +23,6 @@ videoRouter.route('/publish-video').post(
 videoRouter.route('/get-video/:videoId').get(getVideoById);
 videoRouter.route('/update-video/:videoId').patch(upload.single('thumbnail'), updateVideo);
 videoRouter.route('/delete-video/:videoId').delete(deleteVideo);
-videoRouter.route('/get-videos').get(getAllVideos);
 videoRouter.route('/toggle-publish-status/:videoId').patch(togglePublishStatus);
 
 export default videoRouter;

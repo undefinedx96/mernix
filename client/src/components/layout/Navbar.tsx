@@ -1,8 +1,8 @@
-import { Menu, Search, Video, Bell, UserCircle, Sun, Moon, LogOut, User, Settings } from 'lucide-react'
+import { Menu, Search, Video, Bell, UserCircle, Sun, Moon, LogOut, User, Settings, ArrowLeft, History, X } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore.ts'
 import { useThemeStore } from '../../store/themeStore.ts'
-import { Link, useNavigate } from 'react-router'
-import { useState, useRef, useEffect, type SubmitEvent } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
+import React, { useState, useRef, useEffect, type SubmitEvent } from 'react'
 import { cn } from '../../utils/cn.ts'
 import { useLogout } from '../../hooks/useLogout.ts'
 import ConfirmationModal from '../common/ConfirmationModal.tsx'
@@ -21,12 +21,21 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 
 	const { mutate: performLogout, isPending: isLoggingOut } = useLogout();
 
-	const [searchQuery, setSearchQuery] = useState('');
+	const [searchParams] = useSearchParams();
+	const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
+	const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+        const savedSearchHistory = localStorage.getItem('mernix_search_history');
+        return savedSearchHistory ? JSON.parse(savedSearchHistory) : [];
+    });
+
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const navigate = useNavigate();
+	const location = useLocation();
+	const isMobileSearching = location.hash === '#searching';
 
 	// close the dropdown if the user clicks anywhere outside of it
 	useEffect(() => {
@@ -43,16 +52,50 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 			document.addEventListener('mousedown', handleClickOutside);
 		}
 
-		return () =>
-			document.removeEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
 	}, [isDropdownOpen]);
+
+	const saveSearchToHistory = (query: string) => {
+        const trimmed = query.trim();
+        if (!trimmed) return;
+
+        setSearchHistory((prevHistory) => {
+            const filtered = prevHistory.filter((item) => item !== trimmed);
+            const updated = [trimmed, ...filtered].slice(0, 6);
+            localStorage.setItem('mernix_search_history', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
+	const deleteHistoryItem = (e: React.MouseEvent, itemToDelete: string) => {
+        e.stopPropagation();
+        setSearchHistory((prevHistory) => {
+            const updated = prevHistory.filter((item) => item !== itemToDelete);
+            localStorage.setItem('mernix_search_history', JSON.stringify(updated));
+            return updated;
+        });
+    };
 
 	const handleSearch = (e: SubmitEvent) => {
 		e.preventDefault();
-		if (searchQuery?.trim()) {
-			navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+		
+		const trimmedQuery = searchQuery?.trim();
+		if (trimmedQuery) {
+			saveSearchToHistory(trimmedQuery);
+			setIsSearchFocused(false);
+			navigate(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+		}
+		else {
+			navigate('/');
 		}
 	};
+
+	const handleHistoryClick = (item: string) => {
+        setSearchQuery(item);
+        saveSearchToHistory(item);
+        setIsSearchFocused(false);
+        navigate(`/search?q=${encodeURIComponent(item)}`);
+    };
 
 	const handleLogoutConfirm = () => {
 		performLogout(undefined, {
@@ -62,6 +105,76 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 			},
 		});
 	};
+
+	const renderHistoryDropdown = () => {
+        if (!isSearchFocused || searchHistory.length === 0) return null;
+
+        return (
+            <div className='absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl z-50 overflow-hidden py-2 transition-all duration-200 ease-out origin-top'>
+                <p className='px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase text-zinc-400 dark:text-zinc-500'>
+                    Recent Searches
+                </p>
+                <div className='flex flex-col'>
+                    {searchHistory.map((item, idx) => (
+                        <div
+                            key={`${item}-${idx}`}
+                            onClick={() => handleHistoryClick(item)}
+                            className='flex items-center justify-between px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 cursor-pointer transition-colors group'
+                        >
+                            <div className='flex items-center gap-3 min-w-0'>
+                                <History size={16} className='text-zinc-400 dark:text-zinc-500 group-hover:text-purple-600 transition-colors shrink-0' />
+                                <span className='text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate'>
+                                    {item}
+                                </span>
+                            </div>
+                            <button
+                                onClick={(e: React.MouseEvent) => deleteHistoryItem(e, item)}
+                                className='p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors z-10 cursor-pointer'
+                                title='Delete search'
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+	if (isMobileSearching) {
+		return (
+			<nav className='h-16 bg-white dark:bg-zinc-950 flex items-center px-4 sticky top-0 z-50 border-b border-zinc-200 dark:border-zinc-900 gap-2 duration-150'>
+				<button
+					onClick={() => navigate(-1)}
+					className='p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-full text-zinc-800 dark:text-zinc-200 cursor-pointer shrink-0'
+					title='Back to browsing'
+				>
+					<ArrowLeft size={22} />
+				</button>
+
+				<div className='relative flex-1'>
+					<form onSubmit={handleSearch} className='relative flex-1'>
+						<input 
+							key={searchParams.get('q') || 'mobile-empty'}
+							type='search'
+							autoFocus
+							title='Search videos...'
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							onFocus={() => setIsSearchFocused(true)}
+							onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+							placeholder='Search videos...'
+							className='w-full bg-zinc-100 dark:bg-zinc-900 border border-transparent focus:border-purple-600/50 rounded-full py-2 px-10 outline-none text-zinc-900 dark:text-zinc-100 transition-all text-sm'
+						/>
+						<Search className='absolute left-3 top-2.5 text-zinc-400' size={18} />
+					</form>
+
+					{renderHistoryDropdown()}
+				</div>
+
+			</nav>
+		);
+	}
 
 	return (
 		<>
@@ -86,23 +199,36 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 					</Link>
 				</div>
 
-				{/* center: search */}
-				<div className='hidden md:flex flex-1 max-w-xl mx-8'>
+				{/* center: search (hidden below 768px) */}
+				<div className='hidden md:flex flex-1 max-w-xl mx-8 relative'>
 					<form onSubmit={handleSearch} className='relative w-full'>
 						<input
+							key={searchParams.get('q') || 'empty'}
 							type='search'
 							title='Search videos...'
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
+							onFocus={() => setIsSearchFocused(true)}
+							onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
 							placeholder='Search videos...'
 							className='w-full bg-zinc-100 dark:bg-zinc-900 border border-transparent focus:border-purple-600/50 rounded-full py-2 px-10 outline-none text-zinc-900 dark:text-zinc-100 transition-all text-sm'
 						/>
 						<Search className='absolute left-3 top-2.5 text-zinc-400' size={18} />
 					</form>
+
+					{renderHistoryDropdown()}
 				</div>
 
 				{/* right: actions */}
 				<div className='flex items-center gap-2 sm:gap-4 relative' ref={dropdownRef}>
+					<button
+						onClick={() => navigate('#searching')}
+						className='flex md:hidden items-center gap-2 text-purple-600 border border-purple-600/30 hover:bg-purple-600/10 dark:border-zinc-800 p-2 rounded-full font-semibold transition-all active:scale-95 cursor-pointer'
+						title='Open search bar'
+					>
+						<Search size={20} />
+					</button>
+
 					<button
 						onClick={toggleTheme}
 						className='flex items-center gap-2 text-purple-700 dark:text-yellow-400 border border-purple-600/20 hover:bg-purple-600/10 dark:border-zinc-800 p-2 rounded-full font-semibold transition-all active:scale-95 cursor-pointer'
