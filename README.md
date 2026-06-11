@@ -1,48 +1,198 @@
 # Mernix
+# Mernix - The Ultimate Developer Video Streaming Hub
 
-Fullstack MERN app for online video watching platform.
-[Visit Here!](https://mernix.vercel.app)
+A modern full-stack video sharing platform inspired by YouTube, built using TypeScript, React, Node.js, Express.js, and MongoDB.
 
-## File/Folder Structure
+Mernix is being developed as a large-scale learning project focused on real-world full-stack application architecture, backend engineering, authentication systems, scalable API design, database modeling, and modern frontend development practices.
 
-```bash
-.
-├── client
+---
+
+## 🚀 Current Status
+
+🚧 Active Development (November 2025 – Present)
+
+### Completed
+
+- [x] User Authentication & Authorization
+- [x] JWT Access Token Authentication
+- [x] Refresh Token Flow
+- [x] Secure HTTP-Only Cookie Authentication
+- [x] User Registration & Login
+- [x] Channel Profile Management
+- [x] Account Settings Management
+- [x] Password Change Functionality
+- [x] Watch History System
+- [x] Search Functionality
+- [x] Home Feed
+- [x] Video Feed APIs
+- [x] Subscription System APIs
+- [x] Like System APIs
+- [x] Comment APIs
+- [x] Playlist APIs
+- [x] Dashboard APIs
+- [x] Swagger Documentation
+- [x] Cloudinary Integration
+- [x] MongoDB Aggregation Pipelines
+
+### In Progress
+
+- [ ] Advanced Video Playback
+- [ ] Creator Dashboard
+- [ ] Video Upload Management
+- [ ] Social Engagement Features
+- [ ] Analytics Dashboard
+- [ ] Responsive Mobile Optimizations
+
+---
+
+# ✨ Features
+
+## Authentication & Security
+
+* JWT Authentication
+* Refresh Token Rotation
+* Protected Routes
+* Secure HTTP-Only Cookies
+* Password Hashing with bcrypt
+
+## Video Platform
+
+* Video Feed
+* Video Details
+* Search Videos
+* Watch History
+* Channel Profiles
+* Video Upload Management
+* User Dashboard
+
+## Social Features
+
+* Comments
+* Likes
+* Subscriptions
+* Playlists
+* Community Posts (Tweets)
+
+## Developer Experience
+
+* TypeScript Across Frontend & Backend
+* Modular Architecture
+* Swagger API Documentation
+* Postman Collection
+* Centralized Error Handling
+* Reusable API Response System
+* Scalable Folder Structure
+
+---
+
+# 🏗️ Architecture
+
+The application follows a modular architecture pattern.
+
+Frontend and backend are completely separated and communicate through REST APIs.
+
+```text
+Client (React + TypeScript)
+        │
+        ▼
+REST API Layer
+        │
+        ▼
+Express Server
+        │
+ ┌──────┼──────┐
+ ▼      ▼      ▼
+Auth   APIs  Middleware
+        │
+        ▼
+MongoDB Database
+        │
+        ▼
+Cloudinary Storage
+```
+
+---
+
+# 🛠️ Tech Stack
+
+## Frontend
+
+* React 19
+* TypeScript
+* TanStack Query
+* Zustand
+* React Hook Form
+* Axios
+* Tailwind CSS v4
+* React Router v7
+* Video.js
+
+## Backend
+
+* Node.js
+* Express.js 5
+* TypeScript
+* MongoDB
+* Mongoose
+* JWT
+* bcrypt
+* Multer
+* Cloudinary
+* Cookie Parser
+* CORS
+
+## Developer Tools
+
+* Git
+* GitHub
+* Swagger
+* Postman
+* Vite
+* ESLint
+* Prettier
+
+---
+
+# 📂 Project Structure
+
+```text
+mernix/
+├── client/
 │   ├── bun.lock
 │   ├── eslint.config.js
 │   ├── index.html
 │   ├── package.json
-│   ├── public
+│   ├── public/
 │   │   ├── favicon.svg
 │   │   └── icons.svg
 │   ├── README.md
-│   ├── src
-│   │   ├── api
+│   ├── src/
+│   │   ├── api/
 │   │   │   ├── api.ts
 │   │   │   ├── auth.service.ts
 │   │   │   └── video.service.ts
 │   │   ├── App.tsx
-│   │   ├── assets
+│   │   ├── assets/
 │   │   │   ├── hero.png
 │   │   │   ├── react.svg
 │   │   │   └── vite.svg
-│   │   ├── components
-│   │   │   ├── auth
+│   │   ├── components/
+│   │   │   ├── auth/
 │   │   │   │   └── LoginModal.tsx
-│   │   │   ├── common
+│   │   │   ├── common/
 │   │   │   │   └── ConfirmationModal.tsx
-│   │   │   ├── container
+│   │   │   ├── container/
 │   │   │   │   └── Container.tsx
-│   │   │   ├── layout
+│   │   │   ├── layout/
 │   │   │   │   ├── Navbar.tsx
 │   │   │   │   └── Sidebar.tsx
-│   │   │   └── layouts
+│   │   │   └── layouts/
 │   │   │       ├── AuthLayout.tsx
 │   │   │       ├── DashboardLayout.tsx
 │   │   │       └── index.ts
-│   │   ├── conf
+│   │   ├── conf/
 │   │   │   └── conf.ts
-│   │   ├── hooks
+│   │   ├── hooks/
 │   │   │   ├── useChangePassword.ts
 │   │   │   ├── useChannelProfile.ts
 │   │   │   ├── useGetVideos.ts
@@ -55,7 +205,7 @@ Fullstack MERN app for online video watching platform.
 │   │   │   └── useWatchHistory.ts
 │   │   ├── index.css
 │   │   ├── main.tsx
-│   │   ├── pages
+│   │   ├── pages/
 │   │   │   ├── Channel.tsx
 │   │   │   ├── Home.tsx
 │   │   │   ├── index.ts
@@ -64,36 +214,36 @@ Fullstack MERN app for online video watching platform.
 │   │   │   ├── Register.tsx
 │   │   │   ├── SearchResults.tsx
 │   │   │   └── WatchHistory.tsx
-│   │   ├── providers
+│   │   ├── providers/
 │   │   │   └── AuthProvider.tsx
-│   │   ├── store
+│   │   ├── store/
 │   │   │   ├── authStore.ts
 │   │   │   └── themeStore.ts
-│   │   ├── types
+│   │   ├── types/
 │   │   │   └── types.ts
-│   │   └── utils
+│   │   └── utils/
 │   │       ├── cn.ts
 │   │       └── formatDuration.ts
 │   ├── tsconfig.app.json
 │   ├── tsconfig.json
 │   ├── tsconfig.node.json
 │   └── vite.config.ts
-├── Postman Collections
+├── Postman Collections/
 │   └── API_Docs.md.json
 ├── README.md
-└── server
+└── server/
     ├── mernix.postman_collection.json
     ├── package.json
     ├── pnpm-lock.yaml
-    ├── public
+    ├── public/
     │   └── temp
     ├── README.md
-    ├── src
+    ├── src/
     │   ├── app.ts
-    │   ├── conf
+    │   ├── conf/
     │   │   └── conf.ts
     │   ├── constants.ts
-    │   ├── controllers
+    │   ├── controllers/
     │   │   ├── comment.controller.ts
     │   │   ├── dashboard.controller.ts
     │   │   ├── healthCheck.controller.ts
@@ -103,13 +253,13 @@ Fullstack MERN app for online video watching platform.
     │   │   ├── tweet.controller.ts
     │   │   ├── user.controller.ts
     │   │   └── video.controller.ts
-    │   ├── db
+    │   ├── db/
     │   │   └── index.ts
-    │   ├── middlewares
+    │   ├── middlewares/
     │   │   ├── auth.middleware.ts
     │   │   ├── error.middleware.ts
     │   │   └── multer.middleware.ts
-    │   ├── models
+    │   ├── models/
     │   │   ├── comment.model.ts
     │   │   ├── like.model.ts
     │   │   ├── playlist.model.ts
@@ -117,7 +267,7 @@ Fullstack MERN app for online video watching platform.
     │   │   ├── tweet.model.ts
     │   │   ├── user.model.ts
     │   │   └── video.model.ts
-    │   ├── routes
+    │   ├── routes/
     │   │   ├── comment.routes.ts
     │   │   ├── dashboard.routes.ts
     │   │   ├── healthCheck.routes.ts
@@ -129,11 +279,11 @@ Fullstack MERN app for online video watching platform.
     │   │   ├── user.routes.ts
     │   │   └── video.routes.ts
     │   ├── server.ts
-    │   ├── types
+    │   ├── types/
     │   │   ├── aggregation.types.ts
     │   │   ├── auth.d.ts
     │   │   └── types.ts
-    │   └── utils
+    │   └── utils/
     │       ├── ApiError.ts
     │       ├── ApiResponse.ts
     │       ├── asyncHandler.ts
@@ -143,3 +293,187 @@ Fullstack MERN app for online video watching platform.
 
 32 directories, 102 files
 ```
+
+---
+
+# 📊 Backend Overview
+
+Current backend implementation includes:
+
+### 9+ API Modules
+
+* User Management & Authentication
+* Videos
+* Comments
+* Tweets
+* Likes
+* Playlists
+* Subscriptions
+* Dashboard
+* Health Monitoring
+
+### 7+ MongoDB Collections
+
+* Users
+* Videos
+* Comments
+* Likes
+* Playlists
+* Subscriptions
+* Tweets (Community Posts)
+
+### Core Backend Features
+
+* JWT Authentication
+* Refresh Token System
+* Cloudinary Uploads
+* Aggregation Pipelines
+* Error Middleware
+* Custom API Responses
+* Async Request Handling
+* Swagger Documentation
+
+---
+
+# 🔐 Authentication Flow
+
+```text
+User Login
+     │
+     ▼
+Validate Credentials
+     │
+     ▼
+Generate Access Token
+Generate Refresh Token
+     │
+     ▼
+Store Refresh Token
+     │
+     ▼
+Send HTTP-Only Cookies
+     │
+     ▼
+Protected API Access
+```
+
+---
+
+# 📖 API Documentation
+
+Swagger documentation is available locally after running the server.
+
+```bash
+http://localhost:3000/api/v1/docs
+```
+
+The repository also includes a Postman Collection for testing endpoints.
+
+---
+
+# ⚙️ Local Setup
+
+## Clone Repository
+
+```bash
+git clone https://github.com/undefinedx96/mernix.git
+
+cd mernix
+```
+
+<small> NOTE: Copy `.env.sample` and create a `.env` file with the required environment variables </small>
+
+## Client Setup
+
+```bash
+cd client
+
+bun i
+
+bun run dev
+```
+
+## Server Setup
+
+```bash
+cd server
+
+pnpm install
+
+pnpm run dev
+```
+
+---
+
+# 🌱 Learning Goals
+
+This project is helping me deepen my understanding of:
+
+* TypeScript
+* Backend Architecture
+* Authentication Systems
+* Database Design
+* MongoDB Aggregation Pipelines
+* REST API Design
+* Scalable Folder Structures
+* Full Stack Application Development
+
+---
+
+# 🛣️ Roadmap
+
+* Creator Studio
+* Video Upload Workflow
+* Advanced Video Player
+* Channel Analytics
+* Notifications
+* Recommendation System
+* Realtime Features
+* Admin Dashboard
+* Performance Optimizations
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+### Branch Strategy
+
+```text
+main                    → Stable production-ready code
+development             → Active integration branch
+
+client/dev/feature-x    → Client feature branches
+server/dev/feature-y    → Server feature branches
+```
+
+### Contribution Guidelines
+
+- Do not create pull requests directly to `main`.
+- Create your branch from `development`.
+- Submit pull requests targeting `development`.
+- Follow the existing folder structure, coding style, and naming conventions.
+- Keep pull requests focused on a single feature or fix.
+
+---
+
+# 👨‍💻 Author
+
+### Prantik Ghosh
+
+MERN Stack Developer
+
+Portfolio: https://prantikghosh.vercel.app
+
+LinkedIn: https://linkedin.com/in/prantikghosh96
+
+GitHub: https://github.com/undefinedx96
+
+Bsky: https://bsky.app/profile/undefinedx96.bsky.social
+
+Dev: https://dev.to/undefinedx96
+
+---
+
+⭐ If you find this project interesting, feel free to star the repository.
