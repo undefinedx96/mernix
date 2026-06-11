@@ -1,4 +1,3 @@
-# Mernix
 # Mernix - The Ultimate Developer Video Streaming Hub
 
 A modern full-stack video sharing platform inspired by YouTube, built using TypeScript, React, Node.js, Express.js, and MongoDB.
