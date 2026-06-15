@@ -1,6 +1,14 @@
+import type { LucideIcon } from 'lucide-react'
+
 export interface Config {
     baseUrl: string;
 }
+
+export type TabItems<T> = {
+    id: T;
+	name: string;
+	icon: LucideIcon;
+}[];
 
 export interface User {
     _id: string;
