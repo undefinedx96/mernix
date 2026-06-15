@@ -3,7 +3,7 @@ import './index.css'
 import App from './App.tsx'
 import { Suspense } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
-import { Channel, Home, Login, ProfileSettings, Register, SearchResults, WatchHistory } from './pages/index.ts'
+import { Channel, CreatorDashboard, Home, Login, ProfileSettings, Register, SearchResults, WatchHistory } from './pages/index.ts'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './providers/AuthProvider.tsx'
 import { AuthLayout, DashboardLayout } from './components/layouts/index.ts'
@@ -55,6 +55,14 @@ const router = createBrowserRouter([
             element: (
               <AuthLayout authentication={true}>
                 <Suspense><SearchResults /></Suspense>
+              </AuthLayout>
+            )
+          },
+          {
+            path: 'studio',
+            element: (
+              <AuthLayout authentication={true}>
+                <Suspense><CreatorDashboard /></Suspense>
               </AuthLayout>
             )
           },

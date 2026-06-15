@@ -8,6 +8,7 @@ const Channel = lazy(() => import('./Channel.tsx'));
 const ProfileSettings = lazy(() => import('./ProfileSettings.tsx'));
 const WatchHistory = lazy(() => import('./WatchHistory.tsx'));
 const SearchResults = lazy(() => import('./SearchResults.tsx'));
+const CreatorDashboard = lazy(() => import('./studio/CreatorDashboard.tsx'));
 
 
 export {
@@ -18,4 +19,5 @@ export {
     ProfileSettings,
     WatchHistory,
     SearchResults,
+    CreatorDashboard,
 }
