@@ -2,14 +2,9 @@ import { Link, useSearchParams } from 'react-router'
 import { BarChart3, CloudUpload, Video } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore.ts'
 import type { TabItems } from '../../types/types.ts'
+import { StudioAnalytics } from '../index.ts'
 
 
-
-const StudioAnalytics = () => (
-    <div className='p-8 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-center text-zinc-400 font-medium text-sm animate-in fade-in duration-200'>
-        Analytics visualization engines and metric telemetry coming soon...
-    </div>
-);
 
 const StudioCreator = () => (
     <div className='p-8 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-center text-zinc-400 font-medium text-sm animate-in fade-in duration-200'>
@@ -79,7 +74,7 @@ const CreatorDashboard = () => {
                 </p>
 
                 {/* HORIZONTAL SUB-NAV BAR */}
-                <div className='border-b border-zinc-200 dark:border-zinc-800/60 sticky top-0 bg-zinc-50/80 dark:bg-zinc-950/40 backdrop-blur-md z-10 select-none'>
+                <div className='border-b border-zinc-200 dark:border-zinc-800/30 sticky top-0 bg-zinc-50/50 dark:bg-zinc-950/20 backdrop-blur-sm z-20 select-none -mx-4 px-4 md:-mx-8 md:px-8'>
                     <div className='flex gap-4 md:gap-6 overflow-x-auto scrollbar-none'>
                         {tabItems.map((tab) => {
                             const isSelected = activeTab === tab.id;
