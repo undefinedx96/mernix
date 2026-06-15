@@ -1,7 +1,7 @@
 import { useChannelProfile } from '../hooks/useChannelProfile.ts'
 import { Commet } from 'react-loading-indicators'
 import { Grid, ListVideo, User as UserIcon, Edit, UserPlus, Calendar } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
+import { format, formatDistanceToNow } from 'date-fns'
 import { useNavigate, useSearchParams } from 'react-router'
 import type { TabItems } from '../types/types.ts'
 
@@ -243,15 +243,9 @@ const Channel = () => {
 										</span>
                                         <span
                                             className='text-xs'
-                                            title={`${new Date(channel.createdAt).getHours()}:${new Date(channel.createdAt).getMinutes()}:${new Date(channel.createdAt).getSeconds()}`}
+                                            title={format(channel.createdAt, 'PPPPpppp')}
                                         >
-                                            {channel.createdAt ? new Date(channel.createdAt).toLocaleDateString(undefined,
-													{
-                                                        dateStyle: 'full'
-													},
-												)
-											: 'Recently'
-                                            }{' '}
+                                            {channel.createdAt ? format(channel.createdAt, 'PPPPpppp'): 'Recently'}{' '}
                                             ({formatDistanceToNow(new Date(channel.createdAt), { addSuffix: true })})
                                         </span>
 									</div>
