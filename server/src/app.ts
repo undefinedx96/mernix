@@ -3,6 +3,7 @@ import type { Application } from 'express'
 import cors from 'cors';
 import conf from './conf/conf.ts';
 import cookieParser from 'cookie-parser';
+import { rateLimit } from 'express-rate-limit';
 
 const app: Application = express();
 
@@ -18,6 +19,12 @@ app.use(express.urlencoded({extended: true, limit: '16kb'}));
 app.use(express.static('public'));
 
 app.use(cookieParser());
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    standardHeaders: 'draft-8',
+});
 
 
 
@@ -47,7 +54,7 @@ catch (error) {
     console.error('Failed to load SwaggerDocument', error);
 }
 
-
+app.use(limiter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/videos', videoRouter);
 app.use('/api/v1/likes', likeRouter);
