@@ -5,7 +5,7 @@ import { useGetVideos } from '../hooks/useGetVideos.ts'
 import { useAuthStore } from '../store/authStore.ts'
 import type { VideoFeedItem } from '../types/types.ts'
 import { formatDuration } from '../utils/formatDuration.ts'
-import { formatDistanceToNow } from 'date-fns'
+import { format, formatDistanceToNow } from 'date-fns'
 
 
 
@@ -124,7 +124,7 @@ const Home = () => {
                                 </Link>
                                 <p
                                     className='text-xs text-zinc-500 dark:text-zinc-400 mt-0.5'
-                                    title={`Created on ${new Date(video.createdAt).toDateString()} • ${new Date(video.createdAt).getHours()}:${new Date(video.createdAt).getMinutes()}:${new Date(video.createdAt).getSeconds()}`}
+                                    title={format(video.createdAt, 'PPPPpppp')}
                                 >
                                     {video.views} views • {formatDistanceToNow(new Date(video.createdAt), { addSuffix: true, includeSeconds: true })}
                                 </p>

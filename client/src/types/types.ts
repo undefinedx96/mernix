@@ -1,6 +1,14 @@
+import type { LucideIcon } from 'lucide-react'
+
 export interface Config {
     baseUrl: string;
 }
+
+export type TabItems<T> = {
+    id: T;
+	name: string;
+	icon: LucideIcon;
+}[];
 
 export interface User {
     _id: string;
@@ -106,6 +114,26 @@ export interface TogglePublishStatusResponse {
 }
 
 export type VideoIdStr = string;
+
+export interface ChannelStatsResponse {
+    totalVideos: number;
+    totalViews: number;
+    subscribers: number;
+    totalLikes: number;
+}
+
+export interface ChannelVideosPaginatedResponse {
+    videos: VideoFeedItem[];
+    totalVideos: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    nextPage: number | null;
+    prevPage: number | null;
+    message?: string;
+}
 
 // ========= Utility based types =========
 

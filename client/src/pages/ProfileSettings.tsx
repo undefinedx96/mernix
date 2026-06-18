@@ -6,16 +6,41 @@ import AvatarEditor, { type AvatarEditorRef } from 'react-avatar-editor'
 import { useAuthStore } from '../store/authStore.ts'
 import { useUpdateSettings } from '../hooks/useUpdateSettings.ts'
 import { useChangePassword } from '../hooks/useChangePassword.ts'
-import type { UpdateAccountData, ChangePasswordData } from '../types/types.ts'
+import type { UpdateAccountData, ChangePasswordData, TabItems } from '../types/types.ts'
 import { User, Key, UserCircle, Camera, Loader2, Mail, X, ZoomIn, ZoomOut } from 'lucide-react'
 
 
+
+type Tabs = 'account' | 'branding' | 'security';
 
 const ProfileSettings = () => {
 
 	const currentUser = useAuthStore((state) => state.user);
 	const [searchParams, setSearchParams] = useSearchParams();
-	const activeTab = searchParams.get('tab') || 'account';
+
+	const validTabs: Tabs[] = ['account', 'branding', 'security'];
+
+	const tabParam = searchParams.get('tab') as Tabs;
+
+	const activeTab = validTabs.includes(tabParam) ? tabParam : 'account';
+
+	const tabItems: TabItems<Tabs> = [
+        {
+            id: 'account',
+            name: 'Account Info',
+            icon: User
+        },
+        {
+            id: 'branding',
+            name: 'Branding Assets',
+            icon: UserCircle
+        },
+        {
+            id: 'security',
+            name: 'Password & Security',
+            icon: Key
+        }
+    ];
 
 	const { updateDetails, isUpdatingDetails, updateAvatar, isUpdatingAvatar, updateCoverImage, isUpdatingCoverImage } = useUpdateSettings();
 
@@ -138,8 +163,8 @@ const ProfileSettings = () => {
 		<>
 			<title>Dashboard Settings | Mernix</title>
 
-			<div className='max-w-6xl mx-auto px-4 md:px-8 py-10 w-full text-zinc-950 dark:text-zinc-50 animate-in fade-in duration-200'>
-				<h1 className='text-3xl font-extrabold tracking-tight mb-2'>
+			<div className='max-w-6xl mx-auto px-4 md:px-8 py-10 w-full text-zinc-950 dark:text-zinc-50 duration-200'>
+				<h1 className='text-2xl md:text-3xl font-extrabold tracking-tight mb-2'>
 					Account Control Settings
 				</h1>
 				<p className='text-sm text-zinc-500 dark:text-zinc-400 mb-8'>
@@ -150,30 +175,27 @@ const ProfileSettings = () => {
 
 					{/* LEFT SIDEBAR CONTROLS */}
 					<aside className='flex flex-row lg:flex-col gap-2 w-full lg:w-64 overflow-x-auto lg:overflow-x-visible pb-3 lg:pb-0 border-b lg:border-b-0 border-zinc-200 dark:border-zinc-800 shrink-0 select-none scrollbar-none'>
-						<button
-							type='button'
-							onClick={() => handleTabChange('account')}
-							className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${activeTab === 'account' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}`}
-                            title='Account Info'
-						>
-							<User size={18} /> Account Info
-						</button>
-						<button
-							type='button'
-							onClick={() => handleTabChange('branding')}
-							className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${activeTab === 'branding' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}`}
-                            title='Branding Assets'
-						>
-							<UserCircle size={18} /> Branding Assets
-						</button>
-						<button
-							type='button'
-							onClick={() => handleTabChange('security')}
-							className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${activeTab === 'security' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}`}
-                            title='Password & Security'
-						>
-							<Key size={18} /> Password & Security
-						</button>
+						{tabItems.map((tab) => {
+							const isSelected = activeTab === tab.id;
+
+							return (
+								<button
+									key={tab.id}
+									type='button'
+									onClick={() => handleTabChange(tab.id)}
+									className={`px-4 py-3 text-xs md:text-sm font-semibold tracking-wide flex items-center gap-2 relative transition-colors duration-200 cursor-pointer whitespace-nowrap rounded-xl ${
+										isSelected
+										? 'bg-purple-600 text-white shadow-lg'
+										: 'hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400'
+									}`}
+									title={tab.name}
+									role='radio'
+								>
+									<tab.icon size={18} />
+									<span>{tab.name}</span>
+								</button>
+							)
+						})}
 					</aside>
 
 					{/* RIGHT PANEL DISPLAY SLATE */}

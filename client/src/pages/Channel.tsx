@@ -1,9 +1,9 @@
-import { useState } from 'react'
 import { useChannelProfile } from '../hooks/useChannelProfile.ts'
 import { Commet } from 'react-loading-indicators'
 import { Grid, ListVideo, User as UserIcon, Edit, UserPlus, Calendar } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { useNavigate } from 'react-router'
+import { format, formatDistanceToNow } from 'date-fns'
+import { useNavigate, useSearchParams } from 'react-router'
+import type { TabItems } from '../types/types.ts'
 
 
 
@@ -11,7 +11,7 @@ const Channel = () => {
 
 	const { channel, isLoading, isError, isOwner, username, error } = useChannelProfile();
 
-	const [activeTab, setActiveTab] = useState<'videos' | 'playlists' | 'about'>('videos');
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const navigate = useNavigate();
 
@@ -44,6 +44,36 @@ const Channel = () => {
 			</div>
 		);
 	}
+
+	type Tabs = 'videos' | 'playlists' | 'about';
+
+	const tabItems: TabItems<Tabs> = [
+        {
+            id: 'videos',
+            name: 'Videos',
+            icon: Grid
+        },
+        {
+            id: 'playlists',
+            name: 'Playlists',
+            icon: ListVideo
+        },
+        {
+            id: 'about',
+            name: 'About',
+            icon: UserIcon
+        }
+    ];
+
+    const validTabs: Tabs[] = ['videos', 'playlists', 'about'];
+    
+    const tabParam = searchParams.get('tab') as Tabs;
+    
+    const activeTab = validTabs.includes(tabParam) ? tabParam : 'videos';
+
+	const handleTabChange = (tabName: Tabs) => {
+        setSearchParams({ tab: tabName });
+    };
 
 
 	return (
@@ -140,33 +170,30 @@ const Channel = () => {
 
 				{/* sub-navigation filter tabs layout */}
 				<div className='max-w-7xl mx-auto px-4 md:px-8 border-b border-zinc-200 dark:border-zinc-800/30 bg-zinc-50/50 dark:bg-zinc-950/20 backdrop-blur-sm sticky top-0 z-10'>
-					<div className='flex gap-6 md:gap-8'>
-						{(['videos', 'playlists', 'about'] as const).map(
-							(tab) => (
+					<div className='flex gap-6 md:gap-8 overflow-x-auto scrollbar-none'>
+						{tabItems.map((tab) => {
+							const isSelected = activeTab === tab.id;
+							return (
 								<button
-									key={tab}
-									onClick={() => setActiveTab(tab)}
-									className={`py-4 px-1 text-sm font-semibold tracking-wide capitalize relative transition-colors duration-200 cursor-pointer ${
-										activeTab === tab
+									key={tab.id}
+									onClick={() => handleTabChange(tab.id)}
+									className={`py-3.5 px-1 text-xs md:text-sm font-semibold tracking-wide flex items-center gap-2 relative transition-colors duration-200 cursor-pointer whitespace-nowrap ${
+										isSelected
 											? 'text-purple-600 dark:text-purple-400'
 											: 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
 									}`}
-                                    title={tab}
+                                    title={tab.name}
                                     role='radio'
 								>
-									<span className='flex items-center gap-2'>
-										{tab === 'videos' && <Grid size={15} />}
-										{tab === 'playlists' && <ListVideo size={15} />}
-										{tab === 'about' && <UserIcon size={15} />}
-										{tab}
-									</span>
+									<tab.icon size={15} />
+                                    <span>{tab.name}</span>
 
-									{activeTab === tab && (
-										<div className='absolute bottom-0 left-0 w-full h-0.75 bg-purple-600 dark:bg-purple-400 rounded-t-full transition-all duration-300' />
-									)}
+                                    {isSelected && (
+                                        <div className='absolute bottom-0 left-0 w-full h-0.75 bg-purple-600 dark:bg-purple-400 rounded-t-full transition-all duration-300' />
+                                    )}
 								</button>
 							)
-						)}
+						})}
 					</div>
 				</div>
 
@@ -216,15 +243,9 @@ const Channel = () => {
 										</span>
                                         <span
                                             className='text-xs'
-                                            title={`${new Date(channel.createdAt).getHours()}:${new Date(channel.createdAt).getMinutes()}:${new Date(channel.createdAt).getSeconds()}`}
+                                            title={format(channel.createdAt, 'PPPPpppp')}
                                         >
-                                            {channel.createdAt ? new Date(channel.createdAt).toLocaleDateString(undefined,
-													{
-                                                        dateStyle: 'full'
-													},
-												)
-											: 'Recently'
-                                            }{' '}
+                                            {channel.createdAt ? format(channel.createdAt, 'PPPPpppp'): 'Recently'}{' '}
                                             ({formatDistanceToNow(new Date(channel.createdAt), { addSuffix: true })})
                                         </span>
 									</div>
