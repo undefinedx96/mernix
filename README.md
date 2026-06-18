@@ -126,7 +126,7 @@ Cloudinary Storage
 * Tailwind CSS v4
 * React Router v7
 * Video.js
-* Sonner (thinking to replace `sonner` with `react-hot-toast`)
+* Sonner (thinking to replace `react-hot-toast` with `sonner`)
 
 ## Backend
 
