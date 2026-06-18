@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router'
-import {Home, PlaySquare, History, MenuSquare, UserSquare, ThumbsUp, Flame, Gamepad2, Trophy, type LucideIcon, LayoutDashboard } from 'lucide-react'
+import {Home, PlaySquare, History, MenuSquare, UserSquare, ThumbsUp, type LucideIcon, LayoutDashboard } from 'lucide-react'
 import { cn } from '../../utils/cn.ts'
 import { useAuthStore } from '../../store/authStore.ts'
 import { type MouseEvent } from 'react'
@@ -46,11 +46,6 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
 					icon: PlaySquare,
 					slug: '/subscriptions',
 				},
-				{
-					name: 'Dashboard',
-					icon: LayoutDashboard,
-					slug: '/studio'
-				}
 			],
 		},
 		{
@@ -78,22 +73,12 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
 			],
 		},
 		{
-			title: 'Explore',
+			title: 'Manage studio',
 			items: [
 				{
-					name: 'Trending',
-					icon: Flame,
-					slug: '/trending'
-				},
-				{
-					name: 'Gaming',
-					icon: Gamepad2,
-					slug: '/gaming'
-				},
-				{
-					name: 'Sports',
-					icon: Trophy,
-					slug: '/sports'
+					name: 'Dashboard',
+					icon: LayoutDashboard,
+					slug: '/studio'
 				},
 			],
 		},
