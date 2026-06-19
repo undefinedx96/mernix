@@ -3,7 +3,6 @@ import type { Application } from 'express'
 import cors from 'cors';
 import conf from './conf/conf.ts';
 import cookieParser from 'cookie-parser';
-import { rateLimit } from 'express-rate-limit';
 
 const app: Application = express();
 
@@ -12,6 +11,8 @@ app.use(cors({
     credentials: true
 }));
 
+app.set('trust proxy', 1);
+
 app.use(express.json({limit: '16kb'}));
 
 app.use(express.urlencoded({extended: true, limit: '16kb'}));
@@ -19,12 +20,6 @@ app.use(express.urlencoded({extended: true, limit: '16kb'}));
 app.use(express.static('public'));
 
 app.use(cookieParser());
-
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 20,
-    standardHeaders: 'draft-8',
-});
 
 
 
@@ -43,6 +38,7 @@ import swaggerUi from 'swagger-ui-express'
 import yaml from 'js-yaml'
 import fs from 'node:fs'
 import { errorHandler } from './middlewares/error.middleware.ts'
+import { limiter } from './middlewares/rateLimiter.middleware.ts';
 
 let swaggerDocument;
 
@@ -66,7 +62,9 @@ app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/healthcheck', healthCheckRouter);
 
 if (swaggerDocument) {
-    app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+        explorer: true
+    }));
 }
 else {
     console.warn('SwaggerDocument does not exist');
