@@ -87,9 +87,9 @@ const StudioAnalytics = () => {
         },
         {
             id: 'metric-videos',
-            title: 'Videos Published',
+            title: 'Total Videos',
             value: stats.totalVideos.toLocaleString(),
-            titleInfo: `${stats.totalVideos.toLocaleString()} videos published`,
+            titleInfo: `${stats.totalVideos.toLocaleString()} videos`,
             icon: Video,
             description: 'Total video assets in subscription manager pipeline',
             gradient: 'from-emerald-600/10 to-teal-600/5 text-emerald-600 dark:text-emerald-400'
