@@ -2,19 +2,13 @@ import { Link, useSearchParams } from 'react-router'
 import { BarChart3, CloudUpload, Video } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore.ts'
 import type { TabItems } from '../../types/types.ts'
-import { StudioAnalytics } from '../index.ts'
+import { StudioAnalytics, StudioMyVideos } from '../index.ts'
 
 
 
 const StudioCreator = () => (
     <div className='p-8 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-center text-zinc-400 font-medium text-sm animate-in fade-in duration-200'>
         Asset dropzones, multimedia drop bins, and upload controllers coming soon...
-    </div>
-);
-
-const StudioMyVideos = () => (
-    <div className='p-8 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-center text-zinc-400 font-medium text-sm animate-in fade-in duration-200'>
-        Content management records, metadata lists, and toggle matrix configurations coming soon...
     </div>
 );
 
