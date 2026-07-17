@@ -10,6 +10,7 @@ const WatchHistory = lazy(() => import('./WatchHistory.tsx'));
 const SearchResults = lazy(() => import('./SearchResults.tsx'));
 const CreatorDashboard = lazy(() => import('./studio/CreatorDashboard.tsx'));
 const StudioAnalytics = lazy(() => import('./studio/StudioAnalytics.tsx'));
+const StudioMyVideos = lazy(() => import('./studio/StudioMyVideos.tsx'));
 
 
 export {
@@ -22,4 +23,5 @@ export {
     SearchResults,
     CreatorDashboard,
     StudioAnalytics,
+    StudioMyVideos,
 }

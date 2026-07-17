@@ -4,10 +4,7 @@ import { videoService } from '../api/video.service.ts'
 import type { AxiosError } from 'axios'
 import toast from 'react-hot-toast'
 
-
-
 export const usePublishVideo = () => {
-
     const queryClient = useQueryClient();
 
     return useMutation<AuthResponse<Video>, AxiosError<ApiErrorResponse>, PublishVideoPayload, ToastId>({
@@ -23,6 +20,7 @@ export const usePublishVideo = () => {
 
         onSuccess: (response, _, context) => {
             queryClient.invalidateQueries({ queryKey: ['videos'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'videos'] });
             toast.success(response.message || 'Video published successfully!', {
                 id: context?.toastId,
                 duration: 3000
@@ -49,6 +47,7 @@ export const useUpdateVideo = () => {
 
         onSuccess: (response, variables, context) => {
             queryClient.invalidateQueries({ queryKey: ['videos'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'videos'] });
             queryClient.invalidateQueries({ queryKey: ['video', variables.videoId] });
 
             toast.success(response.message || 'Video changes updated successfully!', {
@@ -85,6 +84,7 @@ export const useDeleteVideo = () => {
 
         onSuccess: (response, videoId, context) => {
             queryClient.invalidateQueries({ queryKey: ['videos'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'videos'] });
             queryClient.invalidateQueries({ queryKey: ['video', videoId] });
 
             toast.success(response.message || 'Video has been deleted', {
@@ -121,9 +121,10 @@ export const useTogglePublish = () => {
 
         onSuccess: (response, videoId, context) => {
             queryClient.invalidateQueries({ queryKey: ['videos'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'videos'] });
             queryClient.invalidateQueries({ queryKey: ['video', videoId] });
 
-            toast.success(response.message || 'Visibility toggled succesfully!', {
+            toast.success(response.message || 'Visibility toggled successfully!', {
                 id: context?.toastId,
                 duration: 3000
             });

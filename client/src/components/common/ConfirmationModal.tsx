@@ -44,7 +44,7 @@ const ConfirmationModal = ({
 				<button
 					disabled={isPending}
 					onClick={onClose}
-					className='absolute top-4 right-4 p-1.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors disabled:opacity-50 cursor-pointer'
+					className='absolute top-2 right-2 p-1.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors disabled:opacity-50 cursor-pointer'
                     title='Close'
 				>
 					<X size={18} />
