@@ -50,7 +50,7 @@ catch (error) {
     console.error('Failed to load SwaggerDocument', error);
 }
 
-app.use(limiter);
+// app.use(limiter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/videos', videoRouter);
 app.use('/api/v1/likes', likeRouter);
