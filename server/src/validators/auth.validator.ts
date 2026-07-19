@@ -7,7 +7,7 @@ const nativeEmailValidator = z.email({
 });
 
 
-export const registerUserSchema = z.object({
+export const baseRegisterUserSchema = z.object({
     firstName: z
         .string({ error: 'First Name is required' })
         .trim()
@@ -42,7 +42,9 @@ export const registerUserSchema = z.object({
         .string()
         .min(6, 'Please confirm your password')
         .trim()
-}).superRefine(
+});
+
+export const registerUserSchema = baseRegisterUserSchema.superRefine(
     ({ confirmPassword, password }, ctx) => {
         if (confirmPassword !== password) {
             ctx.addIssue({
@@ -143,3 +145,13 @@ export const changeCurrentPasswordSchema = z.object({
 });
 
 export type ChangeCurrentPasswordBody = z.infer<typeof changeCurrentPasswordSchema>;
+
+
+
+export const updateAccountDetailsSchema = baseRegisterUserSchema.pick({
+    firstName: true,
+    lastName: true,
+    email: true
+});
+
+export type UpdateAccountDetailsBody = z.infer<typeof updateAccountDetailsSchema>;

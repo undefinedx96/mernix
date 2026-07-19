@@ -4,14 +4,14 @@ import { User } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { GetAllVideosQueryType, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
+import type { GetAllVideosQueryType, TokenResponse, UserParams } from '../types/types.ts'
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
 import mongoose, { type PipelineStage } from 'mongoose'
 import type { ChannelProfileDataResponseObj, WatchHistoryVideoDataResponseObj } from '../types/aggregation.types.ts'
 import { Video } from '../models/video.model.ts'
-import { registerFileSchema, type RegisterFilesReqBody, type RegisterReqBody, type LoginReqBody, loginUserSchema, registerUserSchema, type ChangeCurrentPasswordBody, changeCurrentPasswordSchema } from '../validators/auth.validator.ts'
+import { registerFileSchema, type RegisterFilesReqBody, type RegisterReqBody, type LoginReqBody, loginUserSchema, registerUserSchema, type ChangeCurrentPasswordBody, changeCurrentPasswordSchema, type UpdateAccountDetailsBody, updateAccountDetailsSchema } from '../validators/auth.validator.ts'
 import bcrypt from 'bcrypt'
 
 
@@ -300,14 +300,13 @@ const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
 
 
 const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAccountDetailsBody>, res: Response) => {
-    const { firstName, lastName, email } = req.body;
+    const validateData = updateAccountDetailsSchema.parse(req.body);
 
-    if (!firstName?.trim() || !lastName?.trim() || !email?.trim()) {
-        throw new ApiError(400, 'All fields are required and cannot be empty');
-    }
+    const { firstName, lastName, email } = validateData;
+    // console.log('Check email casing: ',email);
 
     // check if email is already taken by different user
-    const existingUser = await User.findOne({ email: email?.toLowerCase() });
+    const existingUser = await User.findOne({ email: email });
 
     if (existingUser && existingUser?._id.toString() !== req.user?._id.toString()) {
         throw new ApiError(409, 'User with this email already exists');
@@ -317,9 +316,9 @@ const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAcco
         req.user?._id,
         {
             $set: {
-                firstName: firstName?.trim(),
-                lastName: lastName?.trim(),
-                email: email?.trim().toLowerCase()
+                firstName,
+                lastName,
+                email
             }
         },
         {
