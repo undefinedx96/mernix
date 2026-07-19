@@ -6,6 +6,7 @@ export interface Config {
     accessTokenExpiry: string;
     refreshTokenSecret: string;
     refreshTokenExpiry: string;
+    bcryptSaltRounds: number;
     cloudinaryCloudName: string;
     cloudinaryApiKey: string;
     cloudinaryApiSecret: string;
@@ -14,21 +15,6 @@ export interface Config {
 export interface TokenResponse {
     accessToken: string;
     refreshToken: string;
-}
-
-export interface RegisterReqBody {
-    firstName: string;
-    lastName: string;
-    email: string;
-    username: string;
-    password: string;
-}
-
-export interface LoginReqBody {
-    userIdentity?: string;
-    email?: string;
-    username?: string;
-    password: string;
 }
 
 export interface ChangeCurrentPasswordBody {

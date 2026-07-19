@@ -11,7 +11,12 @@
     "type-watch": "tsc --noEmit -w",
     "tunnel": "cloudflared tunnel --url http://127.0.0.1:3000"
   },
-  "keywords": ["mernix", "mern-app", "video-stream", "youtube-alike"],
+  "keywords": [
+    "mernix",
+    "mern-app",
+    "video-stream",
+    "youtube-alike"
+  ],
   "author": "Prantik Ghosh",
   "license": "MIT",
   "devDependencies": {
@@ -41,6 +46,7 @@
     "mongoose": "^9.3.3",
     "mongoose-aggregate-paginate-v2": "^1.1.4",
     "multer": "^2.1.1",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.4.3"
   }
 }

@@ -4,14 +4,15 @@ import { User } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { ChangeCurrentPasswordBody, GetAllVideosQueryType, LoginReqBody, RegisterReqBody, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
+import type { ChangeCurrentPasswordBody, GetAllVideosQueryType, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
 import mongoose, { type PipelineStage } from 'mongoose'
 import type { ChannelProfileDataResponseObj, WatchHistoryVideoDataResponseObj } from '../types/aggregation.types.ts'
 import { Video } from '../models/video.model.ts'
-
+import { registerFileSchema, type RegisterFilesReqBody, type RegisterReqBody, type LoginReqBody, loginUserSchema, registerUserSchema } from '../validators/auth.validator.ts'
+import bcrypt from 'bcrypt'
 
 
 
@@ -26,8 +27,8 @@ const generateAccessAndRefreshTokens = async (userId: string): Promise<TokenResp
 
         const accessToken = user?.generateAccessToken();
         const refreshToken = user?.generateRefreshToken();
-
-        user.refreshToken = refreshToken;
+        
+        user.refreshToken = await bcrypt.hash(refreshToken, conf.bcryptSaltRounds);
         await user?.save({ validateBeforeSave: false });
 
         return {accessToken, refreshToken};
@@ -40,12 +41,10 @@ const generateAccessAndRefreshTokens = async (userId: string): Promise<TokenResp
 
 
 const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, res: Response) => {
-    const { firstName, lastName, email, username, password } = req.body;
+    const validateData = registerUserSchema.parse(req.body);
+
+    const { firstName, lastName, email, username, password } = validateData;
     // console.log(firstName, lastName, email, username, password);
-    
-    if ([firstName, lastName, email, username, password].some(field => field?.trim() === '')) {
-        throw new ApiError(400, 'All fields are required');
-    }
     
     const existingUser = await User.findOne({
         $or: [{ username }, { email }]
@@ -55,30 +54,30 @@ const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, 
         throw new ApiError(409, 'User with this email or username already exists');
     }
     
-    const files = req.files as {[fieldName: string]: Express.Multer.File[]};
+    // const files = req.files as {[fieldName: string]: Express.Multer.File[]};
+    const files: RegisterFilesReqBody = registerFileSchema.parse(req.files) as {
+        avatar: Express.Multer.File[];
+        coverImage?: Express.Multer.File[];
+    };
     // console.log(files);
 
     const avatarLocalPath = files?.avatar?.[0]?.path;
 
     const coverImageLocalPath = files?.coverImage?.[0]?.path;
 
-    if (!avatarLocalPath) {
-        throw new ApiError(400, 'Avatar file is required');
-    }
-
     const avatar = avatarLocalPath ? await uploadOnCloudinary(avatarLocalPath) : null;
 
     const coverImage = coverImageLocalPath ? await uploadOnCloudinary(coverImageLocalPath) : null;
 
     if (!avatar) {
-        throw new ApiError(400, 'Avatar is required');
+        throw new ApiError(400, 'Avatar upload failed to process');
     }
 
     const createUser = await User.create({
-        firstName: firstName?.trim(),
-        lastName: lastName?.trim(),
-        username: username?.toLowerCase().trim(),
-        email: email?.trim(),
+        firstName,
+        lastName,
+        username,
+        email,
         avatar: avatar?.url,
         avatarPublicId: avatar?.public_id,
         coverImage: coverImage?.url || '',
@@ -91,6 +90,7 @@ const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, 
     if (!createdUser) {
         throw new ApiError(500, 'Something went wrong while registering the user');
     }
+    // console.log(createUser)
 
     return res
     .status(201)
@@ -103,22 +103,15 @@ const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, 
 
 
 const loginUser = asyncHandler(async (req: Request<{}, {}, LoginReqBody>, res: Response) => {
-    const { userIdentity, email, username, password } = req.body;
-
-    // console.log(`User identifier: ${userIdentity}, Email: ${email}, Username: ${username}, Password ${password}`);
-
-    const loginIdentifier = (userIdentity || email || username || '')?.trim();
-    // console.log(`Login identifier: "${loginIdentifier}"`);
-
-    // if (!userIdentifier && !username && !email) {}
-    if (!loginIdentifier) {
-        throw new ApiError(400, 'Username or email is required');
-    }
+    const validateData = loginUserSchema.parse(req.body);
+    
+    const { userIdentity, password } = validateData;
+    // console.log(`User identifier: ${userIdentity}, Password ${password}`);
 
     const userExists = await User.findOne({
         $or: [
-            {email: loginIdentifier?.toLowerCase()?.trim()},
-            {username: loginIdentifier?.toLowerCase()?.trim()}
+            {email: userIdentity},
+            {username: userIdentity}
         ]
     });
 
@@ -199,7 +192,9 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
             throw new ApiError(401, 'Invalid refresh token');
         }
     
-        if (incomingRefreshToken !== user?.refreshToken) {
+        const isRefreshTokenValid = await bcrypt.compare(incomingRefreshToken, user?.refreshToken || '');
+        
+        if (isRefreshTokenValid) {
             throw new ApiError(401, 'Refresh token is expired or used');
         }
     

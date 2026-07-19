@@ -2,6 +2,8 @@ import { Router } from 'express'
 import { upload } from '../middlewares/multer.middleware.ts'
 import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, loginUser, logoutUser, refreshTheAccessToken, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from '../controllers/user.controller.ts'
 import { verifyJWT } from '../middlewares/auth.middleware.ts'
+import { validate } from '../middlewares/validate.middleware.ts';
+import { loginUserSchema, registerFileSchema, registerUserSchema } from '../validators/auth.validator.ts';
 
 const userRouter = Router();
 
@@ -16,9 +18,10 @@ userRouter.route('/register').post(
             maxCount: 1
         }
     ]),
+    validate({ body: registerUserSchema, files: registerFileSchema }),
     registerUser
 );
-userRouter.route('/login').post(loginUser);
+userRouter.route('/login').post(validate(loginUserSchema), loginUser);
 userRouter.route('/logout').post(verifyJWT, logoutUser);
 userRouter.route('/refresh-token').post(refreshTheAccessToken);
 userRouter.route('/change-current-password').post(verifyJWT, changeCurrentPassword);
