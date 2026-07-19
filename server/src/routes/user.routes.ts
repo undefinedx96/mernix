@@ -3,7 +3,7 @@ import { upload } from '../middlewares/multer.middleware.ts'
 import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, loginUser, logoutUser, refreshTheAccessToken, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from '../controllers/user.controller.ts'
 import { verifyJWT } from '../middlewares/auth.middleware.ts'
 import { validate } from '../middlewares/validate.middleware.ts';
-import { loginUserSchema, registerFileSchema, registerUserSchema } from '../validators/auth.validator.ts';
+import { changeCurrentPasswordSchema, loginUserSchema, registerFileSchema, registerUserSchema } from '../validators/auth.validator.ts';
 
 const userRouter = Router();
 
@@ -24,7 +24,7 @@ userRouter.route('/register').post(
 userRouter.route('/login').post(validate(loginUserSchema), loginUser);
 userRouter.route('/logout').post(verifyJWT, logoutUser);
 userRouter.route('/refresh-token').post(refreshTheAccessToken);
-userRouter.route('/change-current-password').post(verifyJWT, changeCurrentPassword);
+userRouter.route('/change-current-password').post(verifyJWT, validate(changeCurrentPasswordSchema), changeCurrentPassword);
 userRouter.route('/get-current-user').get(verifyJWT, getCurrentUser);
 userRouter.route('/update-account-details').patch(verifyJWT, updateAccountDetails);
 userRouter.route('/update-user-avatar').patch(verifyJWT, upload.single('avatar'), updateUserAvatar);

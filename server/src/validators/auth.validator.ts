@@ -78,9 +78,6 @@ export type RegisterFilesReqBody = z.infer<typeof registerFileSchema>;
 
 
 
-
-
-
 export const loginUserSchema = z.object({
     userIdentity: z
         .string({ error: 'User identity (username or email) is required' })
@@ -124,3 +121,25 @@ export const loginUserSchema = z.object({
 
 
 export type LoginReqBody = z.infer<typeof loginUserSchema>;
+
+
+
+export const changeCurrentPasswordSchema = z.object({
+    oldPassword: z
+        .string()
+        .trim(),
+    newPassword: z
+        .string()
+        .min(6, 'Password must be atleast 6 characters long')
+        .max(12, 'Password must not exceed 12 characters')
+        .trim()
+        .regex(/[A-Z]/, 'Password must contain atleast 1 uppercase letter')
+        .regex(/[a-z]/, 'Password must contain atleast 1 lowercase letter')
+        .regex(/[0-9]/, 'Password must contain atleast 1 number')
+        .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain atleast 1 special character'),
+}).refine(({ oldPassword, newPassword }) => oldPassword !== newPassword, {
+    error: 'New password cannot be the same as your old password',
+    path: ['newPassword']
+});
+
+export type ChangeCurrentPasswordBody = z.infer<typeof changeCurrentPasswordSchema>;

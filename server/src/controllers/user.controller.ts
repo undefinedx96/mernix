@@ -4,14 +4,14 @@ import { User } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { ChangeCurrentPasswordBody, GetAllVideosQueryType, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
+import type { GetAllVideosQueryType, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
 import mongoose, { type PipelineStage } from 'mongoose'
 import type { ChannelProfileDataResponseObj, WatchHistoryVideoDataResponseObj } from '../types/aggregation.types.ts'
 import { Video } from '../models/video.model.ts'
-import { registerFileSchema, type RegisterFilesReqBody, type RegisterReqBody, type LoginReqBody, loginUserSchema, registerUserSchema } from '../validators/auth.validator.ts'
+import { registerFileSchema, type RegisterFilesReqBody, type RegisterReqBody, type LoginReqBody, loginUserSchema, registerUserSchema, type ChangeCurrentPasswordBody, changeCurrentPasswordSchema } from '../validators/auth.validator.ts'
 import bcrypt from 'bcrypt'
 
 
@@ -55,10 +55,7 @@ const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, 
     }
     
     // const files = req.files as {[fieldName: string]: Express.Multer.File[]};
-    const files: RegisterFilesReqBody = registerFileSchema.parse(req.files) as {
-        avatar: Express.Multer.File[];
-        coverImage?: Express.Multer.File[];
-    };
+    const files: RegisterFilesReqBody = registerFileSchema.parse(req.files);
     // console.log(files);
 
     const avatarLocalPath = files?.avatar?.[0]?.path;
@@ -194,7 +191,7 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
     
         const isRefreshTokenValid = await bcrypt.compare(incomingRefreshToken, user?.refreshToken || '');
         
-        if (isRefreshTokenValid) {
+        if (!isRefreshTokenValid) {
             throw new ApiError(401, 'Refresh token is expired or used');
         }
     
@@ -224,8 +221,10 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
 
 
 const changeCurrentPassword = asyncHandler(async (req: Request<{}, {}, ChangeCurrentPasswordBody>, res: Response) => {
-    const { oldPassword, newPassword } = req.body;
-    // console.log('Old password', oldPassword);
+    const validateData = changeCurrentPasswordSchema.parse(req.body);
+
+    const { oldPassword, newPassword } = validateData;
+    // console.log(`Old password: ${oldPassword}  New password: ${newPassword}`);
 
     const user = await User.findById(req.user?._id);
 
