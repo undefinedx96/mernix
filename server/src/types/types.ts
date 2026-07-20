@@ -17,12 +17,6 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
-// export interface UpdateAccountDetailsBody {
-//     firstName: string;
-//     lastName: string;
-//     email: string;
-// }
-
 export type UserParams = {
     username: string;
 };
