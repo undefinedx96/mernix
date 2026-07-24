@@ -8,7 +8,7 @@ Mernix is being developed as a large-scale learning project focused on real-worl
 
 ## 🚀 Current Status
 
-🚧 Active Development (November 2025 – Present)
+🚧 Active Development (December 2025 – Present)
 
 ### Completed
 
