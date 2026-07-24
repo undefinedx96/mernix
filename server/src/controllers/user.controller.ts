@@ -4,14 +4,15 @@ import { User } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { ChangeCurrentPasswordBody, GetAllVideosQueryType, LoginReqBody, RegisterReqBody, TokenResponse, UpdateAccountDetailsBody, UserParams } from '../types/types.ts'
+import type { GetAllVideosQueryType, TokenResponse, UserParams } from '../types/types.ts'
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
 import mongoose, { type PipelineStage } from 'mongoose'
 import type { ChannelProfileDataResponseObj, WatchHistoryVideoDataResponseObj } from '../types/aggregation.types.ts'
 import { Video } from '../models/video.model.ts'
-
+import { type RegisterReqBody, type LoginReqBody, type ChangeCurrentPasswordBody, type UpdateAccountDetailsBody, type RegisterFilesReqBody } from '../validators/auth.validator.ts'
+import bcrypt from 'bcrypt'
 
 
 
@@ -26,13 +27,14 @@ const generateAccessAndRefreshTokens = async (userId: string): Promise<TokenResp
 
         const accessToken = user?.generateAccessToken();
         const refreshToken = user?.generateRefreshToken();
-
-        user.refreshToken = refreshToken;
+        
+        user.refreshToken = await bcrypt.hash(refreshToken, conf.bcryptSaltRounds);
         await user?.save({ validateBeforeSave: false });
 
         return {accessToken, refreshToken};
     }
     catch (error) {
+        if (error instanceof ApiError) throw error;
         throw new ApiError(500, 'Something went wrong while generating access and refresh tokens.');
     }
 };
@@ -43,10 +45,6 @@ const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, 
     const { firstName, lastName, email, username, password } = req.body;
     // console.log(firstName, lastName, email, username, password);
     
-    if ([firstName, lastName, email, username, password].some(field => field?.trim() === '')) {
-        throw new ApiError(400, 'All fields are required');
-    }
-    
     const existingUser = await User.findOne({
         $or: [{ username }, { email }]
     });
@@ -55,30 +53,25 @@ const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, 
         throw new ApiError(409, 'User with this email or username already exists');
     }
     
-    const files = req.files as {[fieldName: string]: Express.Multer.File[]};
-    // console.log(files);
+    const files = (req.files as unknown) as RegisterFilesReqBody;
 
-    const avatarLocalPath = files?.avatar?.[0]?.path;
+    const avatarLocalPath = files.avatar[0].path;
 
-    const coverImageLocalPath = files?.coverImage?.[0]?.path;
-
-    if (!avatarLocalPath) {
-        throw new ApiError(400, 'Avatar file is required');
-    }
+    const coverImageLocalPath = files.coverImage?.[0]?.path;
 
     const avatar = avatarLocalPath ? await uploadOnCloudinary(avatarLocalPath) : null;
 
     const coverImage = coverImageLocalPath ? await uploadOnCloudinary(coverImageLocalPath) : null;
 
     if (!avatar) {
-        throw new ApiError(400, 'Avatar is required');
+        throw new ApiError(400, 'Avatar upload failed to process');
     }
 
     const createUser = await User.create({
-        firstName: firstName?.trim(),
-        lastName: lastName?.trim(),
-        username: username?.toLowerCase().trim(),
-        email: email?.trim(),
+        firstName,
+        lastName,
+        username,
+        email,
         avatar: avatar?.url,
         avatarPublicId: avatar?.public_id,
         coverImage: coverImage?.url || '',
@@ -91,6 +84,7 @@ const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, 
     if (!createdUser) {
         throw new ApiError(500, 'Something went wrong while registering the user');
     }
+    // console.log(createUser)
 
     return res
     .status(201)
@@ -103,22 +97,13 @@ const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, 
 
 
 const loginUser = asyncHandler(async (req: Request<{}, {}, LoginReqBody>, res: Response) => {
-    const { userIdentity, email, username, password } = req.body;
-
-    // console.log(`User identifier: ${userIdentity}, Email: ${email}, Username: ${username}, Password ${password}`);
-
-    const loginIdentifier = (userIdentity || email || username || '')?.trim();
-    // console.log(`Login identifier: "${loginIdentifier}"`);
-
-    // if (!userIdentifier && !username && !email) {}
-    if (!loginIdentifier) {
-        throw new ApiError(400, 'Username or email is required');
-    }
+    const { userIdentity, password } = req.body;
+    // console.log(`User identifier: ${userIdentity}, Password ${password}`);
 
     const userExists = await User.findOne({
         $or: [
-            {email: loginIdentifier?.toLowerCase()?.trim()},
-            {username: loginIdentifier?.toLowerCase()?.trim()}
+            {email: userIdentity},
+            {username: userIdentity}
         ]
     });
 
@@ -199,7 +184,9 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
             throw new ApiError(401, 'Invalid refresh token');
         }
     
-        if (incomingRefreshToken !== user?.refreshToken) {
+        const isRefreshTokenValid = await bcrypt.compare(incomingRefreshToken, user?.refreshToken || '');
+        
+        if (!isRefreshTokenValid) {
             throw new ApiError(401, 'Refresh token is expired or used');
         }
     
@@ -230,7 +217,7 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
 
 const changeCurrentPassword = asyncHandler(async (req: Request<{}, {}, ChangeCurrentPasswordBody>, res: Response) => {
     const { oldPassword, newPassword } = req.body;
-    // console.log('Old password', oldPassword);
+    // console.log(`Old password: ${oldPassword}  New password: ${newPassword}`);
 
     const user = await User.findById(req.user?._id);
 
@@ -307,13 +294,10 @@ const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
 
 const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAccountDetailsBody>, res: Response) => {
     const { firstName, lastName, email } = req.body;
-
-    if (!firstName?.trim() || !lastName?.trim() || !email?.trim()) {
-        throw new ApiError(400, 'All fields are required and cannot be empty');
-    }
+    // console.log('Check email casing: ',email);
 
     // check if email is already taken by different user
-    const existingUser = await User.findOne({ email: email?.toLowerCase() });
+    const existingUser = await User.findOne({ email: email });
 
     if (existingUser && existingUser?._id.toString() !== req.user?._id.toString()) {
         throw new ApiError(409, 'User with this email already exists');
@@ -323,9 +307,9 @@ const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAcco
         req.user?._id,
         {
             $set: {
-                firstName: firstName?.trim(),
-                lastName: lastName?.trim(),
-                email: email?.trim().toLowerCase()
+                firstName,
+                lastName,
+                email
             }
         },
         {
@@ -351,8 +335,8 @@ const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAcco
 const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
     const avatarLocalPath = req.file?.path;
 
-    if (!avatarLocalPath) {
-        throw new ApiError(400, 'Avatar file is missing');
+    if (!req.user?._id) {
+        throw new ApiError(401, 'Unauthorized request');
     }
 
     const user = await User.findById(req.user?._id);
@@ -403,8 +387,16 @@ const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
 const updateUserCoverImage = asyncHandler(async (req: Request, res: Response) => {
     const coverImageLocalPath = req.file?.path;
 
+    if (!req.user?._id) {
+        throw new ApiError(401, 'Unauthorized request');
+    }
+
     if (!coverImageLocalPath) {
-        throw new ApiError(400, 'Cover image file is missing');
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, req.user, 'No cover image file provided. Profile remains unchanged')
+        );
     }
 
     const user = await User.findById(req.user?._id);
@@ -420,7 +412,7 @@ const updateUserCoverImage = asyncHandler(async (req: Request, res: Response) =>
     // console.log('coverimage: ', coverImage);
 
     if (!coverImage?.url) {
-        throw new ApiResponse(500, 'Error while uploading cover image to cloudinary');
+        throw new ApiError(500, 'Error while uploading cover image to cloudinary');
     }
 
     const updatedUser = await User.findByIdAndUpdate(

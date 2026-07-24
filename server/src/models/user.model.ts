@@ -86,7 +86,7 @@ const userSchema = new Schema<IUser>(
 userSchema.pre<IUser>('save', async function () {
     if (!this.isModified('password')) return;
 
-    this.password = await bcrypt.hash(this.password, 10);
+    this.password = await bcrypt.hash(this.password, conf.bcryptSaltRounds);
 });
 
 userSchema.methods.isPasswordCorrect = async function (this: IUser, password: string): Promise<boolean> {

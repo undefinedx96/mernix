@@ -1,5 +1,18 @@
-import type { Request } from 'express';
-import multer, { type StorageEngine } from 'multer';
+import type { Request } from 'express'
+import multer, { type FileFilterCallback, type StorageEngine } from 'multer'
+import { ApiError } from '../utils/ApiError';
+
+
+const ALLOWED_IMAGE_MIMES = [
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+] as const;
+
+type ImageMime = typeof ALLOWED_IMAGE_MIMES[number];
+
+const IMAGE_MAX = 200 * 1024;
+
 
 const storage: StorageEngine = multer.diskStorage({
     destination: function (
@@ -20,6 +33,29 @@ const storage: StorageEngine = multer.diskStorage({
     },
 });
 
-export const upload = multer({
-    storage: storage,
+
+const imageFileFilter = (
+    req: Request,
+    file: Express.Multer.File,
+    cb: FileFilterCallback
+) => {
+    if (ALLOWED_IMAGE_MIMES.includes(file.mimetype as ImageMime)) {
+        cb(null, true);
+    }
+    else {
+        cb(new ApiError(400, `Invalid ${file.fieldname} format. Only JPEG, PNG, and WebP images are allowed`));
+    }
+};
+
+
+export const uploadImage = multer({
+    storage,
+    fileFilter: imageFileFilter,
+    limits: {
+        fileSize: IMAGE_MAX
+    }
+});
+
+export const uploadVideo = multer({
+    storage,
 });
