@@ -1,0 +1,26 @@
+name: Sync to Gitea on Merge
+
+on:
+  push:
+    branches:
+      - main
+      - development  # Add any other core tracking branches here
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Crucial to fetch all history and branches
+
+      - name: Push to Gitea
+        env:
+          GITEA_PAT: ${{ secrets.GITEA_TOKEN }}
+        run: |
+          B64_AUTH=$(echo -n "username:${GITEA_PAT}" | base64 | tr -d '\n')
+          git remote add gitea https://gitea.com/undefinedx96/mernix.git
+          git config --local http.extraheader "Authorization: Basic ${B64_AUTH}"
+          git push --force gitea --all
+          git push --force gitea --tags
