@@ -36,6 +36,7 @@ Mernix is being developed as a large-scale learning project focused on real-worl
 
 ### In Progress
 
+- [] Zod Validation for Text Fields and File Uploads
 - [ ] Advanced Video Playback
 - [ ] Creator Dashboard
 - [ ] Video Upload Management
