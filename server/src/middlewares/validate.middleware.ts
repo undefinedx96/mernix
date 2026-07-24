@@ -1,25 +1,56 @@
 import type { NextFunction, Request, Response } from 'express'
 import { ZodError, ZodType } from 'zod'
-import { ApiError } from '../utils/ApiError';
+import { ApiError } from '../utils/ApiError.ts'
+import fs from 'node:fs/promises'
 
 
 
-export const validate = (schemas: ZodType | { body?: ZodType, files?: ZodType }) => {
-    return (req: Request, res: Response, next: NextFunction) => {
+interface ValidationSchema {
+    body?: ZodType<Record<string, unknown>>;
+    query?: ZodType<Record<string, string | string[] | undefined>>;
+    params?: ZodType<Record<string, string>>;
+    files?: ZodType<any>;
+    file?: ZodType<any>;
+}
+
+
+export const validate = (schemas: ValidationSchema) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            if ('body' in schemas || 'files' in schemas) {
-                const config = schemas as { body?: ZodType, files?: ZodType };
-
-                if (config.body) config.body.parse(req.body);
-                if (config.files) config.files.parse(req.files);
-            }
-            else {
-                const dataToValidate = req.method === 'GET' ? (req.query || {}) : req.body;
-                (schemas as ZodType).parse(dataToValidate);
-            }
-            next();
+            if (schemas.body) req.body = schemas.body.parse(req.body);
+            if (schemas.query) req.query = schemas.query.parse(req.query);
+            if (schemas.params) req.params = schemas.params.parse(req.params);
+            if (schemas.file) req.file = schemas.file.parse(req.file);
+            if (schemas.files) req.files = schemas.files.parse(req.files);
+            
+            return next();
         }
         catch (error) {
+            const cleanupPromises: Promise<void>[] = [];
+
+            if (req.file?.path) {
+                cleanupPromises.push(fs.unlink(req.file.path).catch(() => {}));
+            }
+
+            if (req.files) {
+                const filesMap = req.files as Record<string, Express.Multer.File[]> | undefined;
+
+                if (filesMap) {
+                    for (const fieldKey in filesMap) {
+                        const fileArray = filesMap[fieldKey];
+                        if (Array.isArray(fileArray)) {
+                            fileArray.forEach((file) => {
+                                if (file.path) {
+                                    cleanupPromises.push(fs.unlink(file.path).catch(() => {}));
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            await Promise.all(cleanupPromises);
+
             if (error instanceof ZodError) {
                 const validationErrors = error.issues.map((issue) => ({
                     field: issue.path.join('.'),
@@ -28,7 +59,7 @@ export const validate = (schemas: ZodType | { body?: ZodType, files?: ZodType })
 
                 return next(new ApiError(400, 'Validation failed', validationErrors));
             }
-            next(error);
+            return next(error);
         }
     }
 };
