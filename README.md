@@ -32,14 +32,16 @@ Mernix is being developed as a large-scale learning project focused on real-worl
 - [x] Swagger Documentation
 - [x] Cloudinary Integration
 - [x] MongoDB Aggregation Pipelines
+- [x] Analytics Dashboard
 
 ### In Progress
 
+- [] Zod Validation for Text Fields and File Uploads
 - [ ] Advanced Video Playback
 - [ ] Creator Dashboard
 - [ ] Video Upload Management
+- [ ] My Videos Feed in Tabular format
 - [ ] Social Engagement Features
-- [ ] Analytics Dashboard
 - [ ] Responsive Mobile Optimizations
 
 ---
@@ -125,6 +127,7 @@ Cloudinary Storage
 * Tailwind CSS v4
 * React Router v7
 * Video.js
+* Sonner (thinking to replace `react-hot-toast` with `sonner`)
 
 ## Backend
 
@@ -139,6 +142,7 @@ Cloudinary Storage
 * Cloudinary
 * Cookie Parser
 * CORS
+* Express Rate Limit
 
 ## Developer Tools
 

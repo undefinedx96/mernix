@@ -11,6 +11,8 @@ app.use(cors({
     credentials: true
 }));
 
+app.set('trust proxy', 1);
+
 app.use(express.json({limit: '16kb'}));
 
 app.use(express.urlencoded({extended: true, limit: '16kb'}));
@@ -36,6 +38,7 @@ import swaggerUi from 'swagger-ui-express'
 import yaml from 'js-yaml'
 import fs from 'node:fs'
 import { errorHandler } from './middlewares/error.middleware.ts'
+import { limiter } from './middlewares/rateLimiter.middleware.ts';
 
 let swaggerDocument;
 
@@ -47,7 +50,7 @@ catch (error) {
     console.error('Failed to load SwaggerDocument', error);
 }
 
-
+// app.use(limiter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/videos', videoRouter);
 app.use('/api/v1/likes', likeRouter);
@@ -59,7 +62,9 @@ app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/healthcheck', healthCheckRouter);
 
 if (swaggerDocument) {
-    app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+        explorer: true
+    }));
 }
 else {
     console.warn('SwaggerDocument does not exist');
