@@ -17,10 +17,6 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
-export type UserParams = {
-    username: string;
-};
-
 export interface PublishAVideoReqBody {
     title: string;
     description: string;
