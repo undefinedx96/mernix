@@ -18,8 +18,8 @@ export const validate = (schemas: ValidationSchema) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             if (schemas.body) req.body = schemas.body.parse(req.body);
-            if (schemas.query) req.query = schemas.query.parse(req.query);
-            if (schemas.params) req.params = schemas.params.parse(req.params);
+            if (schemas.query) Object.assign(req.query, schemas.query.parse(req.query));
+            if (schemas.params) Object.assign(req.params, schemas.params.parse(req.params));
             if (schemas.file) req.file = schemas.file.parse(req.file);
             if (schemas.files) req.files = schemas.files.parse(req.files);
             
