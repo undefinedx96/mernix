@@ -3,7 +3,7 @@ import { uploadImage } from '../middlewares/multer.middleware.ts'
 import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, loginUser, logoutUser, refreshTheAccessToken, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from '../controllers/user.controller.ts'
 import { verifyJWT } from '../middlewares/auth.middleware.ts'
 import { validate } from '../middlewares/validate.middleware.ts'
-import { changeCurrentPasswordSchema, loginUserSchema, registerFileSchema, registerUserSchema, singleAvatarUpdateSchema, singleCoverImageUpdateSchema, updateAccountDetailsSchema } from '../validators/auth.validator.ts'
+import { changeCurrentPasswordSchema, getUserChannelProfileParamsSchema, loginUserSchema, registerFileSchema, registerUserSchema, singleAvatarUpdateSchema, singleCoverImageUpdateSchema, updateAccountDetailsSchema, watchHistoryQuerySchema } from '../validators/auth.validator.ts'
 import { handleRegisterUploads } from '../middlewares/upload.middleware.ts'
 
 
@@ -52,7 +52,15 @@ userRouter.route('/update-user-cover').patch(
     updateUserCoverImage
 );
 
-userRouter.route('/get-user-channel-profile/:username').get(verifyJWT, getUserChannelProfile);
-userRouter.route('/get-watch-history').get(verifyJWT, getWatchHistory);
+userRouter.route('/get-user-channel-profile/:username').get(
+    verifyJWT,
+    validate({ params: getUserChannelProfileParamsSchema }),
+    getUserChannelProfile
+);
+userRouter.route('/get-watch-history').get(
+    verifyJWT,
+    validate({ query: watchHistoryQuerySchema }),
+    getWatchHistory
+);
 
 export default userRouter;

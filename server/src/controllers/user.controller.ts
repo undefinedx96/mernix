@@ -4,14 +4,14 @@ import { User } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
 import { ApiResponse } from '../utils/ApiResponse.ts'
 import type { Request, Response } from 'express'
-import type { GetAllVideosQueryType, TokenResponse, UserParams } from '../types/types.ts'
+import type { TokenResponse } from '../types/types.ts'
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from '../constants.ts'
 import jwt from 'jsonwebtoken'
 import conf from '../conf/conf.ts'
 import mongoose, { type PipelineStage } from 'mongoose'
 import type { ChannelProfileDataResponseObj, WatchHistoryVideoDataResponseObj } from '../types/aggregation.types.ts'
 import { Video } from '../models/video.model.ts'
-import { type RegisterReqBody, type LoginReqBody, type ChangeCurrentPasswordBody, type UpdateAccountDetailsBody, type RegisterFilesReqBody } from '../validators/auth.validator.ts'
+import { type RegisterReqBody, type LoginReqBody, type ChangeCurrentPasswordBody, type UpdateAccountDetailsBody, type RegisterFilesReqBody, type WatchHistoryQuery, type UserParams } from '../validators/auth.validator.ts'
 import bcrypt from 'bcrypt'
 
 
@@ -448,10 +448,6 @@ const updateUserCoverImage = asyncHandler(async (req: Request, res: Response) =>
 const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) => {
     const { username } = req.params as UserParams;
 
-    if (!username?.trim()) {
-        throw new ApiError(400, 'Username is missing');
-    }
-
     const channel = await User.aggregate<ChannelProfileDataResponseObj>([
         {
             $match: {
@@ -586,9 +582,9 @@ const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) =
 
 
 
-const getWatchHistory = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+const getWatchHistory = asyncHandler(async (req: Request, res: Response) => {
 
-    const { page = '1', limit = '10' } = req.query;
+    const { page = '1', limit = '10' } = req.query as unknown as WatchHistoryQuery;
 
     const user = await User.findById(req.user?._id).select('watchHistory');
 

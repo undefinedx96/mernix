@@ -189,3 +189,37 @@ export type SingleAvatarReqFile = z.infer<typeof singleAvatarUpdateSchema>;
 export const singleCoverImageUpdateSchema = createSingleFileSchema('coverImage', true);
 
 export type SingleCoverReqFile = z.infer<typeof singleCoverImageUpdateSchema>;
+
+
+
+export const getUserChannelProfileParamsSchema = z.object({
+    username: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .min(3, 'Username must be at least 3 characters long')
+        .max(255, 'Username must not exceed 255 characters')
+});
+
+export type UserParams = z.infer<typeof getUserChannelProfileParamsSchema>;
+
+
+
+export const watchHistoryQuerySchema = z.object({
+    page: z
+        .string()
+        .optional()
+        .default('1')
+        .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+            error: 'Page must be a positive integer'
+        }),
+    limit: z
+        .string()
+        .optional()
+        .default('10')
+        .refine((val) => !isNaN(Number(val)) && Number(val) > 0 && Number(val) <= 100, {
+            error: 'Limit must be between 1 and 100'
+        })
+});
+
+export type WatchHistoryQuery = z.infer<typeof watchHistoryQuerySchema>;
