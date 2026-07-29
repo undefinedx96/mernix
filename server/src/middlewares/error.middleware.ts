@@ -1,25 +1,41 @@
 import type { NextFunction, Request, Response } from 'express'
 import { ApiError } from '../utils/ApiError.ts'
 import multer from 'multer'
+import { cleanupTempFiles } from '../utils/cleanupTempFiles.ts'
+import { AVATAR_MAX, COVER_MAX, THUMBNAIL_MAX, VIDEO_MAX } from './upload.middleware.ts'
+import { formatBytesToReadable } from '../utils/formatBytesToReadable.ts'
 
 
 
-const errorHandler = (
+const fileSizes: Record<string, number> = {
+    avatar: AVATAR_MAX,
+    coverImage: COVER_MAX,
+    videoFile: VIDEO_MAX,
+    thumbnail: THUMBNAIL_MAX,
+};
+
+
+const errorHandler = async (
     err: unknown,
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
+    await cleanupTempFiles(req);
+
     let formattedError: ApiError;
 
     if (err instanceof multer.MulterError) {
         const fieldName = err.field || 'file';
 
         if (err.code === 'LIMIT_FILE_SIZE') {
+            const maxBytes = fileSizes[fieldName] || 2000 * 1024;
+            const maxAllowed = formatBytesToReadable(maxBytes);
+
             formattedError = new ApiError(400, 'Validation failed', [
                 {
                     field: fieldName,
-                    message: `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} size limit exceeded.`
+                    message: `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} size limit exceeded. Max allowed is ${maxAllowed}`
                 }
             ]);
         }

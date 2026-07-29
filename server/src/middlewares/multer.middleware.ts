@@ -1,6 +1,6 @@
 import type { Request } from 'express'
 import multer, { type FileFilterCallback, type StorageEngine } from 'multer'
-import { ApiError } from '../utils/ApiError';
+import { ApiError } from '../utils/ApiError.ts'
 
 
 const ALLOWED_IMAGE_MIMES = [
@@ -52,7 +52,16 @@ const imageFileFilter = (
         cb(null, true);
     }
     else {
-        cb(new ApiError(400, `Invalid ${file.fieldname} format. Only JPEG, PNG, and WebP images are allowed`));
+        cb(new ApiError(
+            400,
+            'Validation Failed',
+            [
+                {
+                    field: file.fieldname,
+                    message: `Invalid ${file.fieldname} format. Only JPEG, PNG, and WebP images are allowed`
+                }
+            ]
+        ));
     }
 };
 
@@ -67,7 +76,16 @@ const videoFileFilter = (
             cb(null, true);
         }
         else {
-            cb(new ApiError(400, `Invalid ${file.fieldname} format. Only JPEG, PNG, and WebP images are allowed`));
+            cb(new ApiError(
+                400,
+                'Validation Failed',
+                [
+                    {
+                        field: file.fieldname,
+                        message: `Invalid ${file.fieldname} format. Only JPEG, PNG, and WebP images are allowed`
+                    }
+                ]
+            ));
         }
     }
 
@@ -76,7 +94,16 @@ const videoFileFilter = (
     }
 
     else {
-        cb(new ApiError(400, `Invalid ${file.fieldname} format. Only MP4, WEBM, MKV, and MOV videos are allowed`));
+        cb(new ApiError(
+            400,
+            'Validation Failed',
+            [
+                {
+                    field: file.fieldname,
+                    message: `Invalid ${file.fieldname} format. Only MP4, WEBM, MKV, and MOV videos are allowed`
+                }
+            ]
+        ));
     }
 };
 
