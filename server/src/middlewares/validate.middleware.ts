@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express'
 import { ZodError, ZodType } from 'zod'
 import { ApiError } from '../utils/ApiError.ts'
-import fs from 'node:fs/promises'
+import { cleanupTempFiles } from '../utils/cleanupTempFiles.ts'
 
 
 
@@ -26,30 +26,7 @@ export const validate = (schemas: ValidationSchema) => {
             return next();
         }
         catch (error) {
-            const cleanupPromises: Promise<void>[] = [];
-
-            if (req.file?.path) {
-                cleanupPromises.push(fs.unlink(req.file.path).catch(() => {}));
-            }
-
-            if (req.files) {
-                const filesMap = req.files as Record<string, Express.Multer.File[]> | undefined;
-
-                if (filesMap) {
-                    for (const fieldKey in filesMap) {
-                        const fileArray = filesMap[fieldKey];
-                        if (Array.isArray(fileArray)) {
-                            fileArray.forEach((file) => {
-                                if (file.path) {
-                                    cleanupPromises.push(fs.unlink(file.path).catch(() => {}));
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-
-            await Promise.all(cleanupPromises);
+            await cleanupTempFiles(req);
 
             if (error instanceof ZodError) {
                 const validationErrors = error.issues.map((issue) => ({
