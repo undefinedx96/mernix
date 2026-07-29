@@ -1,13 +1,13 @@
 import type { Request, Response } from 'express'
 import { asyncHandler } from '../utils/asyncHandler.ts'
-import type { GetAllVideosQueryType, PublishAVideoReqBody, VideoParams } from '../types/types.ts'
 import { ApiError } from '../utils/ApiError.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts';
 import { Video } from '../models/video.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
-import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose';
+import mongoose, { type PipelineStage } from 'mongoose';
 import { User } from '../models/user.model.ts';
 import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts';
+import type { PublishAVideoReqBody, VideoParams,  GetAllVideosQueryType, PublishVideoFiles, UpdateVideoReqBody } from '../validators/video.validator.ts'
 
 
 
@@ -15,18 +15,10 @@ import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts';
 
 const publishAVideo = asyncHandler(async (req: Request<{}, {}, PublishAVideoReqBody>, res: Response) => {
     const { title, description } = req.body;
-
-    if ([title, description].some(field => field?.trim() === '')) {
-        throw new ApiError(400, 'Video title and description fields are required');
-    }
     
-    const files = req.files as {[fieldName: string]: Express.Multer.File[]};
+    const files = (req.files as unknown) as PublishVideoFiles;
     const thumbnailLocalPath = files?.thumbnail?.[0]?.path;
     const videoFileLocalPath = files?.videoFile?.[0]?.path;
-
-    if (!thumbnailLocalPath || !videoFileLocalPath) {
-        throw new ApiError(400, 'Thumbnail and video files are required');
-    }
 
     let thumbnail, videoFile;
 
@@ -36,12 +28,8 @@ const publishAVideo = asyncHandler(async (req: Request<{}, {}, PublishAVideoReqB
             uploadOnCloudinary(videoFileLocalPath)
         ]);
 
-        if (!thumbnail) {
-            throw new ApiError(400, 'Thumbnail is required');
-        }
-
-        if (!videoFile) {
-            throw new ApiError(400, 'Video file is required');
+        if (!thumbnail || !videoFile) {
+            throw new ApiError(500, 'Failed to upload files to Cloudinary');
         }
 
         const video = await Video.create({
@@ -85,11 +73,7 @@ const publishAVideo = asyncHandler(async (req: Request<{}, {}, PublishAVideoReqB
 
 
 const getVideoById = asyncHandler(async (req: Request, res: Response) => {
-    const { videoId } = req.params as VideoParams;
-
-    if (!isValidObjectId(videoId)) {
-        throw new ApiError(400, 'Invalid or missing video ID');
-    }
+    const { videoId } = req.params as unknown as VideoParams;
 
     const updateTasks: Promise<any>[] = [
         Video.findByIdAndUpdate(
@@ -193,18 +177,10 @@ const getVideoById = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-const updateVideo = asyncHandler(async (req: Request, res: Response) => {
-    const { videoId } = req.params as VideoParams;
+const updateVideo = asyncHandler(async (req: Request<{}, {}, UpdateVideoReqBody>, res: Response) => {
+    const { videoId } = req.params as unknown as VideoParams;
 
-    if (!isValidObjectId(videoId)) {
-        throw new ApiError(400, 'Invalid or missing video ID');
-    }
-
-    const { title, description } = req.body as PublishAVideoReqBody;
-
-    if ([title, description].some(field => field?.trim() === '')) {
-        throw new ApiError(400, 'Video title and description fields are required');
-    }
+    const { title, description } = req.body;
 
     const video = await Video.findById(videoId);
 
@@ -228,7 +204,7 @@ const updateVideo = asyncHandler(async (req: Request, res: Response) => {
         }
 
         if (video.thumbnailPublicId) {
-            await deleteFromCloudinary(video.thumbnailPublicId);
+            await deleteFromCloudinary(video.thumbnailPublicId, 'image');
         }
     }
 
@@ -260,11 +236,7 @@ const updateVideo = asyncHandler(async (req: Request, res: Response) => {
 
 
 const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
-    const { videoId } = req.params as VideoParams;
-
-    if (!isValidObjectId(videoId)) {
-        throw new ApiError(400, 'Invalid or missing videoID');
-    }
+    const { videoId } = req.params as unknown as VideoParams;
 
     const video = await Video.findById(videoId);
 
@@ -310,8 +282,8 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-const getAllVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
-    const { page = '1', limit = '10', searchQuery, sortBy = 'createdAt', sortType = 'desc', userId } = req.query;
+const getAllVideos = asyncHandler(async (req: Request, res: Response) => {
+    const { page = '1', limit = '10', searchQuery, sortBy = 'createdAt', sortType = 'desc', userId } = req.query as unknown as GetAllVideosQueryType;
 
     const pipeline: PipelineStage[] = [];
 
@@ -337,9 +309,6 @@ const getAllVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQu
     }
 
     if (userId) {
-        if (!isValidObjectId(userId)) {
-            throw new ApiError(400, 'Invalid user ID');
-        }
         pipeline.push({
             $match: {
                 owner: new mongoose.Types.ObjectId(userId)
@@ -347,7 +316,7 @@ const getAllVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQu
         });
     }
 
-    const isOwnerRequesting = userId && req.user?._id.toString() === userId.toString();
+    const isOwnerRequesting = Boolean(userId && req.user?._id.toString() === userId.toString());
 
     if (!isOwnerRequesting) {
         pipeline.push({
@@ -427,11 +396,7 @@ const getAllVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQu
 
 
 const togglePublishStatus = asyncHandler(async (req: Request, res: Response) => {
-    const { videoId } = req.params as VideoParams;
-
-    if (!isValidObjectId(videoId)) {
-        throw new ApiError(400, 'Invalid or missing video ID');
-    }
+    const { videoId } = req.params as unknown as VideoParams;
 
     const video = await Video.findById(videoId);
 
