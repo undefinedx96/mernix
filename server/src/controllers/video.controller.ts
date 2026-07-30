@@ -1,19 +1,19 @@
 import type { Request, Response } from 'express'
-import { asyncHandler } from '../utils/asyncHandler.ts'
 import { ApiError } from '../utils/ApiError.ts'
-import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts';
-import { Video } from '../models/video.model.ts';
-import { ApiResponse } from '../utils/ApiResponse.ts';
-import mongoose, { type PipelineStage } from 'mongoose';
-import { User } from '../models/user.model.ts';
-import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts';
+import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
+import { Video } from '../models/video.model.ts'
+import { ApiResponse } from '../utils/ApiResponse.ts'
+import mongoose, { type PipelineStage } from 'mongoose'
+import { User } from '../models/user.model.ts'
+import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts'
 import type { PublishAVideoReqBody, VideoParams,  GetAllVideosQueryType, PublishVideoFiles, UpdateVideoReqBody } from '../validators/video.validator.ts'
+import { asyncHandler } from '../utils/asyncHandler.ts'
 
 
 
 
 
-const publishAVideo = asyncHandler(async (req: Request<{}, {}, PublishAVideoReqBody>, res: Response) => {
+const publishAVideo = async (req: Request<{}, {}, PublishAVideoReqBody>, res: Response) => {
     const { title, description } = req.body;
     
     const files = (req.files as unknown) as PublishVideoFiles;
@@ -57,22 +57,34 @@ const publishAVideo = asyncHandler(async (req: Request<{}, {}, PublishAVideoReqB
         );
     }
     catch (error: any) {
+        const cleanUpPromises: Promise<unknown>[] = [];
+
         if (thumbnail?.public_id) {
-            await deleteFromCloudinary(thumbnail?.public_id, 'image');
+            cleanUpPromises.push(deleteFromCloudinary(thumbnail?.public_id, 'image'));
         }
 
         if (videoFile?.public_id) {
-            await deleteFromCloudinary(videoFile?.public_id, 'video');
+            cleanUpPromises.push(deleteFromCloudinary(videoFile?.public_id, 'video'));
         }
 
-        throw new ApiError(500, error?.message || 'Something went wrong while publishing the video');
+        if (cleanUpPromises.length > 0) {
+            await Promise.allSettled(cleanUpPromises);
+        }
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        const errorMessage = error instanceof Error ? error.message : 'Something went wrong while publishing the video';
+
+        throw new ApiError(500, errorMessage);
     }
-});
+};
 
 
 
 
-const getVideoById = asyncHandler(async (req: Request, res: Response) => {
+const getVideoById = async (req: Request, res: Response) => {
     const { videoId } = req.params as unknown as VideoParams;
 
     const updateTasks: Promise<any>[] = [
@@ -172,7 +184,7 @@ const getVideoById = asyncHandler(async (req: Request, res: Response) => {
     .json(
         new ApiResponse(200, video[0], 'Video details fetched successfully')
     );
-});
+};
 
 
 
