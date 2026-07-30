@@ -8,6 +8,8 @@ import { User } from '../models/user.model.ts'
 import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts'
 import type { PublishAVideoReqBody, VideoParams,  GetAllVideosQueryType, PublishVideoFiles, UpdateVideoReqBody } from '../validators/video.validator.ts'
 import { asyncHandler } from '../utils/asyncHandler.ts'
+import { Like } from '../models/like.model.ts'
+import { Comment } from '../models/comment.model.ts'
 
 
 
@@ -189,7 +191,7 @@ const getVideoById = async (req: Request, res: Response) => {
 
 
 
-const updateVideo = asyncHandler(async (req: Request<{}, {}, UpdateVideoReqBody>, res: Response) => {
+const updateVideo = async (req: Request<{}, {}, UpdateVideoReqBody>, res: Response) => {
     const { videoId } = req.params as unknown as VideoParams;
 
     const { title, description } = req.body;
@@ -205,49 +207,69 @@ const updateVideo = asyncHandler(async (req: Request<{}, {}, UpdateVideoReqBody>
     }
 
     const thumbnailLocalPath = req.file?.path;
+    
+    const oldThumbnailPublicId = video.thumbnailPublicId;
 
     let uploadedThumbnail;
 
-    if (thumbnailLocalPath) {
-        uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
-        
-        if (!uploadedThumbnail) {
-            throw new ApiError(500, 'Failed to upload thumbnail on cloudinary');
-        }
+    try {
+        if (thumbnailLocalPath) {
+            uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
 
-        if (video.thumbnailPublicId) {
-            await deleteFromCloudinary(video.thumbnailPublicId, 'image');
-        }
-    }
-
-    const updatedVideo = await Video.findByIdAndUpdate(
-        videoId,
-        {
-            $set: {
-                title,
-                description,
-                thumbnail: uploadedThumbnail?.url || video.thumbnail,
-                thumbnailPublicId: uploadedThumbnail?.public_id || video.thumbnailPublicId
+            if (!uploadedThumbnail?.url) {
+                throw new ApiError(500, 'Failed to upload thumbnail to Cloudinary');
             }
-        },
-        {
-            returnDocument: 'after'
         }
-    );
 
-    // console.log('Updated video: ', updatedVideo);
+        const updatedVideo = await Video.findByIdAndUpdate(
+            videoId,
+            {
+                $set: {
+                    title: title ?? video.title,
+                    description: description ?? video.description,
+                    thumbnail: uploadedThumbnail?.url || video.thumbnail,
+                    thumbnailPublicId: uploadedThumbnail?.public_id || video.thumbnailPublicId
+                }
+            },
+            {
+                returnDocument: 'after'
+            }
+        );
 
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, updatedVideo, 'Video updated successfully')
-    );
-});
+        if (!updatedVideo) {
+            throw new ApiError(500, 'Failed to update video details in database');
+        }
+
+        console.log('Updated video:', updateVideo);
+
+        if (thumbnailLocalPath && oldThumbnailPublicId) {
+            await deleteFromCloudinary(oldThumbnailPublicId, 'image');
+        }
+
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, updatedVideo, 'Video updated successfully')
+        );
+    }
+    catch (error) {
+        if (uploadedThumbnail?.public_id) {
+            await deleteFromCloudinary(uploadedThumbnail.public_id, 'image');
+        }
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        const errorMessage = error instanceof Error ? error.message : 'Something went wrong while updating the video';
+        throw new ApiError(500, errorMessage);
+    }
+};
 
 
 
 
-const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
+const deleteVideo = async (req: Request, res: Response) => {
     const { videoId } = req.params as unknown as VideoParams;
 
     const video = await Video.findById(videoId);
@@ -260,15 +282,7 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(403, 'Unauthorized request! You do not own this video');
     }
 
-    if (video.videoFilePublicId) {
-        await deleteFromCloudinary(video.videoFilePublicId, 'video');
-    }
-
-    if (video.thumbnailPublicId) {
-        await deleteFromCloudinary(video.thumbnailPublicId, 'image');
-    }
-
-    const deleteVideoAndWatchHistory = await Promise.all([
+    await Promise.all([
         Video.findByIdAndDelete(videoId),
         User.updateMany(
             {
@@ -279,17 +293,35 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
                     watchHistory: videoId
                 }
             }
-        )
+        ),
+        Like.deleteMany({
+            video: videoId
+        }),
+        Comment.deleteMany({
+            video: videoId
+        })
     ]);
 
-    // console.log('Delete video and watch history: ', deleteVideoAndWatchHistory);
+    const cleanUpPromises: Promise<unknown>[] = [];
+
+    if (video.videoFilePublicId) {
+        cleanUpPromises.push(deleteFromCloudinary(video.videoFilePublicId, 'video'));
+    }
+
+    if (video.thumbnailPublicId) {
+        cleanUpPromises.push(deleteFromCloudinary(video.thumbnailPublicId, 'image'));
+    }
+
+    if (cleanUpPromises.length > 0) {
+        await Promise.allSettled(cleanUpPromises);
+    }
 
     return res
     .status(200)
     .json(
         new ApiResponse(200, {}, 'Video deleted and watch history purged successfully')
     );
-});
+};
 
 
 
