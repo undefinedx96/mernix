@@ -7,7 +7,6 @@ import mongoose, { type PipelineStage } from 'mongoose'
 import { User } from '../models/user.model.ts'
 import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts'
 import type { PublishAVideoReqBody, VideoParams,  GetAllVideosQueryType, PublishVideoFiles, UpdateVideoReqBody } from '../validators/video.validator.ts'
-import { asyncHandler } from '../utils/asyncHandler.ts'
 import { Like } from '../models/like.model.ts'
 import { Comment } from '../models/comment.model.ts'
 
@@ -326,24 +325,26 @@ const deleteVideo = async (req: Request, res: Response) => {
 
 
 
-const getAllVideos = asyncHandler(async (req: Request, res: Response) => {
+const getAllVideos = async (req: Request, res: Response) => {
     const { page = '1', limit = '10', searchQuery, sortBy = 'createdAt', sortType = 'desc', userId } = req.query as unknown as GetAllVideosQueryType;
 
     const pipeline: PipelineStage[] = [];
 
     if (searchQuery) {
+        const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
         pipeline.push({
             $match: {
                 $or: [
                     {
                         title: {
-                            $regex: searchQuery,
+                            $regex: escapedQuery,
                             $options: 'i'
                         }
                     },
                     {
                         description: {
-                            $regex: searchQuery,
+                            $regex: escapedQuery,
                             $options: 'i'
                         }
                     }
@@ -434,12 +435,12 @@ const getAllVideos = asyncHandler(async (req: Request, res: Response) => {
     .json(
         new ApiResponse(200, allVideos, 'All videos fetched successfully')
     );
-});
+};
 
 
 
 
-const togglePublishStatus = asyncHandler(async (req: Request, res: Response) => {
+const togglePublishStatus = async (req: Request, res: Response) => {
     const { videoId } = req.params as unknown as VideoParams;
 
     const video = await Video.findById(videoId);
@@ -448,7 +449,7 @@ const togglePublishStatus = asyncHandler(async (req: Request, res: Response) => 
         throw new ApiError(404, 'Video does not exist');
     }
 
-    if (video?.owner.toString() !== req.user?._id.toString()) {
+    if (video.owner.toString() !== req.user?._id.toString()) {
         throw new ApiError(403, 'Unauthorized request! You cannot change the status of this video');
     }
 
@@ -468,7 +469,7 @@ const togglePublishStatus = asyncHandler(async (req: Request, res: Response) => 
             `Video publish status: ${video.isPublished? 'Published' : 'Unpublished'}`
         )
     );
-});
+};
 
 
 
