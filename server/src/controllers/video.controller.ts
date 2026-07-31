@@ -239,7 +239,7 @@ const updateVideo = async (req: Request<{}, {}, UpdateVideoReqBody>, res: Respon
             throw new ApiError(500, 'Failed to update video details in database');
         }
 
-        console.log('Updated video:', updateVideo);
+        // console.log('Updated video:', updateVideo);
 
         if (thumbnailLocalPath && oldThumbnailPublicId) {
             await deleteFromCloudinary(oldThumbnailPublicId, 'image');
