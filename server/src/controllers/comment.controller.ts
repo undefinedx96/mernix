@@ -1,35 +1,27 @@
-import type { Request, Response } from 'express';
-import { asyncHandler } from '../utils/asyncHandler.ts';
-import type { CommentBody, CommentParams, GetAllVideosQueryType, VideoParams } from '../types/types.ts';
-import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose';
-import { ApiError } from '../utils/ApiError.ts';
-import { Comment } from '../models/comment.model.ts';
-import { ApiResponse } from '../utils/ApiResponse.ts';
-import { Video } from '../models/video.model.ts';
-import { Like } from '../models/like.model.ts';
+import type { Request, Response } from 'express'
+import mongoose, { type PipelineStage } from 'mongoose'
+import { ApiError } from '../utils/ApiError.ts'
+import { Comment } from '../models/comment.model.ts'
+import { ApiResponse } from '../utils/ApiResponse.ts'
+import { Video } from '../models/video.model.ts'
+import { Like } from '../models/like.model.ts'
+import type { GetAllVideosQueryType, VideoParams } from '../validators/video.validator.ts'
+import type { CommentBody, CommentParams } from '../validators/comment.validator.ts'
 
 
 
 
-const addComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res:Response) => {
-    const { videoId } = req.params as VideoParams;
+const addComment = async (req: Request<{}, {}, CommentBody>, res:Response) => {
+    const { videoId } = req.params as unknown as VideoParams;
     const { content } = req.body;
 
     // console.log(`VideoID: ${videoId}`);
     // console.log(`Content: ${content}`);
-
-    if (!isValidObjectId(videoId)) {
-        throw new ApiError(400, 'Invalid or missing video ID');
-    }
     
     const video = await Video.findOne({ _id: videoId, isPublished: true });
 
     if (!video) {
         throw new ApiError(404, 'Video does not exist or is private');
-    }
-
-    if (!content?.trim()) {
-        throw new ApiError(400, 'Comment is required');
     }
 
     const comment = await Comment.create({
@@ -43,38 +35,21 @@ const addComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res:Re
         throw new ApiError(500, 'Falied to add comment');
     }
 
-    const createdComment = await Comment.findById(comment._id).populate(
-        'owner',
-        'username avatar firstName lastName'
-    );
-
-    if (!createdComment) {
-        throw new ApiError(500, 'Failed to retreive comment');
-    }
-
-    // console.log('Created comment: ', createdComment);
+    await comment.populate('owner', 'username avatar firstName lastName');
 
     return res
     .status(201)
     .json(
-        new ApiResponse(201, createdComment, 'Comment created successfully')
+        new ApiResponse(201, comment, 'Comment created successfully')
     );
-});
+};
 
 
 
 
-const updateComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res: Response) => {
+const updateComment = async (req: Request<{}, {}, CommentBody>, res: Response) => {
     const { commentId } = req.params as CommentParams;
     const { content } = req.body;
-
-    if (!isValidObjectId(commentId)) {
-        throw new ApiError(400, 'Invalid or missing comment ID');
-    }
-
-    if (!content?.trim()) {
-        throw new ApiError(400, 'Content is required');
-    }
 
     const updatedComment = await Comment.findOneAndUpdate(
         {
@@ -83,7 +58,7 @@ const updateComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res
         },
         {
             $set: {
-                content: content.trim()
+                content
             }
         },
         {
@@ -102,17 +77,13 @@ const updateComment = asyncHandler(async (req: Request<{}, {}, CommentBody>, res
     .json(
         new ApiResponse(200, updatedComment, 'Comment updated successfully')
     );
-});
+};
 
 
 
 
-const deleteComment = asyncHandler(async (req: Request, res: Response) => {
+const deleteComment = async (req: Request, res: Response) => {
     const { commentId } = req.params as CommentParams;
-
-    if (!isValidObjectId(commentId)) {
-        throw new ApiError(400, 'Invalid or missing comment ID');
-    }
 
     const comment = await Comment.findById(commentId);
 
@@ -120,7 +91,13 @@ const deleteComment = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(404, 'Comment does not exist');
     }
 
-    if (comment.owner.toString() !== req.user?._id.toString()) {
+    const isCommentOwner = comment.owner.toString() === req.user?._id.toString();
+
+    const video = await Video.findById(comment.video);
+    
+    const isVideoOwner = video?.owner.toString() === req.user?._id.toString();
+
+    if (!isCommentOwner && !isVideoOwner) {
         throw new ApiError(403, 'Unauthorized! You do not have permission to delete this comment');
     }
 
@@ -134,29 +111,23 @@ const deleteComment = asyncHandler(async (req: Request, res: Response) => {
     .json(
         new ApiResponse(200, { commentId }, 'Comment deleted successfully')
     );
-});
+};
 
 
 
 
-const getVideoComments = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+const getVideoComments = async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
     const { videoId } = req.params as VideoParams;
     const { page = '1', limit = '10' } = req.query;
 
-    if (!isValidObjectId(videoId)) {
-        throw new ApiError(400, 'Invalid or missing video ID');
-    }
+    const videoObjectId = new mongoose.Types.ObjectId(videoId);
 
-    const video = await Video.findById(videoId);
-
-    if (!video) {
-        throw new ApiError(404, 'Video does not exist');
-    }
+    const currentUser = req.user?._id ? new mongoose.Types.ObjectId(req.user._id) : null;
 
     const pipeline: PipelineStage[] = [
         {
             $match: {
-                video: new mongoose.Types.ObjectId(videoId)
+                video: videoObjectId
             }
         },
         {
@@ -199,7 +170,7 @@ const getVideoComments = asyncHandler(async (req: Request<{}, {}, {}, GetAllVide
                 },
                 isLiked: {
                     $cond: {
-                        if: { $in: [req.user?._id, '$likes.likedBy'] },
+                        if: { $in: [currentUser, '$likes.likedBy'] },
                         then: true,
                         else: false
                     }
@@ -224,11 +195,7 @@ const getVideoComments = asyncHandler(async (req: Request<{}, {}, {}, GetAllVide
 
     const comments = await Comment.aggregatePaginate(commentAggregate, {
         page: parseInt(page, 10),
-        limit: parseInt(limit, 10),
-        customLabels: {
-            totalDocs: 'totalComments',
-            docs: 'comments'
-        }
+        limit: parseInt(limit, 10)
     });
     // console.log('Video comments: ', comments);
 
@@ -237,7 +204,7 @@ const getVideoComments = asyncHandler(async (req: Request<{}, {}, {}, GetAllVide
     .json(
         new ApiResponse(200, comments, 'Comments fetched successfully')
     );
-});
+};
 
 
 
