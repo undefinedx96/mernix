@@ -17,10 +17,6 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
-export type CommentParams = {
-    commentId: string;
-};
-
 export type TweetParams = {
     tweetId: string;
 };
@@ -36,10 +32,6 @@ export type ChannelParams = {
 export type SubscriptionParams = {
     subscriberId: string;
 };
-
-export interface CommentBody {
-    content: string;
-}
 
 export interface TweetBody {
     content: string;

@@ -4,7 +4,7 @@ import { createSingleFileSchema, multerFileSchema } from './auth.validator.ts'
 
 
 
-const objectIdSchema = z
+export const objectIdSchema = z
     .string({ error: 'ID parameter is required' })
     .trim()
     .refine((val) => isValidObjectId(val), {
