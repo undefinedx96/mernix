@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import { ZodError, ZodType } from 'zod'
-import { ApiError } from '../utils/ApiError.ts'
+import { ApiError, type ValidationError } from '../utils/ApiError.ts'
 import { cleanupTempFiles } from '../utils/cleanupTempFiles.ts'
 
 
@@ -29,7 +29,7 @@ export const validate = (schemas: ValidationSchema) => {
             await cleanupTempFiles(req);
 
             if (error instanceof ZodError) {
-                const validationErrors = error.issues.map((issue) => ({
+                const validationErrors: ValidationError[] = error.issues.map((issue) => ({
                     field: issue.path.join('.'),
                     message: issue.message
                 }));
