@@ -11,8 +11,8 @@ import type { CommentBody, CommentParams } from '../validators/comment.validator
 
 
 
-const addComment = async (req: Request<{}, {}, CommentBody>, res:Response) => {
-    const { videoId } = req.params as unknown as VideoParams;
+const addComment = async (req: Request<VideoParams, {}, CommentBody>, res:Response) => {
+    const { videoId } = req.params;
     const { content } = req.body;
 
     // console.log(`VideoID: ${videoId}`);
@@ -47,8 +47,8 @@ const addComment = async (req: Request<{}, {}, CommentBody>, res:Response) => {
 
 
 
-const updateComment = async (req: Request<{}, {}, CommentBody>, res: Response) => {
-    const { commentId } = req.params as CommentParams;
+const updateComment = async (req: Request<CommentParams, {}, CommentBody>, res: Response) => {
+    const { commentId } = req.params;
     const { content } = req.body;
 
     const updatedComment = await Comment.findOneAndUpdate(
@@ -82,8 +82,8 @@ const updateComment = async (req: Request<{}, {}, CommentBody>, res: Response) =
 
 
 
-const deleteComment = async (req: Request, res: Response) => {
-    const { commentId } = req.params as CommentParams;
+const deleteComment = async (req: Request<CommentParams>, res: Response) => {
+    const { commentId } = req.params;
 
     const comment = await Comment.findById(commentId);
 
@@ -116,8 +116,8 @@ const deleteComment = async (req: Request, res: Response) => {
 
 
 
-const getVideoComments = async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
-    const { videoId } = req.params as VideoParams;
+const getVideoComments = async (req: Request<VideoParams, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { videoId } = req.params;
     const { page = '1', limit = '10' } = req.query;
 
     const videoObjectId = new mongoose.Types.ObjectId(videoId);

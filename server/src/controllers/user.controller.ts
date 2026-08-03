@@ -505,8 +505,8 @@ const updateUserCoverImage = async (req: Request, res: Response) => {
 
 
 
-const getUserChannelProfile = async (req: Request, res: Response) => {
-    const { username } = req.params as UserParams;
+const getUserChannelProfile = async (req: Request<UserParams>, res: Response) => {
+    const { username } = req.params;
 
     const channel = await User.aggregate<ChannelProfileDataResponseObj>([
         {
@@ -642,9 +642,9 @@ const getUserChannelProfile = async (req: Request, res: Response) => {
 
 
 
-const getWatchHistory = async (req: Request, res: Response) => {
+const getWatchHistory = async (req: Request<{}, {}, {}, WatchHistoryQuery>, res: Response) => {
 
-    const { page = '1', limit = '10' } = req.query as unknown as WatchHistoryQuery;
+    const { page = '1', limit = '10' } = req.query;
 
     const user = await User.findById(req.user?._id).select('watchHistory');
 

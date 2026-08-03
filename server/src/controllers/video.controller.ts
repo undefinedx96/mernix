@@ -85,8 +85,8 @@ const publishAVideo = async (req: Request<{}, {}, PublishAVideoReqBody>, res: Re
 
 
 
-const getVideoById = async (req: Request, res: Response) => {
-    const { videoId } = req.params as unknown as VideoParams;
+const getVideoById = async (req: Request<VideoParams>, res: Response) => {
+    const { videoId } = req.params;
 
     const updateTasks: Promise<any>[] = [
         Video.findByIdAndUpdate(
@@ -190,8 +190,8 @@ const getVideoById = async (req: Request, res: Response) => {
 
 
 
-const updateVideo = async (req: Request<{}, {}, UpdateVideoReqBody>, res: Response) => {
-    const { videoId } = req.params as unknown as VideoParams;
+const updateVideo = async (req: Request<VideoParams, {}, UpdateVideoReqBody>, res: Response) => {
+    const { videoId } = req.params;
 
     const { title, description } = req.body;
 
@@ -268,8 +268,8 @@ const updateVideo = async (req: Request<{}, {}, UpdateVideoReqBody>, res: Respon
 
 
 
-const deleteVideo = async (req: Request, res: Response) => {
-    const { videoId } = req.params as unknown as VideoParams;
+const deleteVideo = async (req: Request<VideoParams>, res: Response) => {
+    const { videoId } = req.params;
 
     const video = await Video.findById(videoId);
 
@@ -325,8 +325,8 @@ const deleteVideo = async (req: Request, res: Response) => {
 
 
 
-const getAllVideos = async (req: Request, res: Response) => {
-    const { page = '1', limit = '10', searchQuery, sortBy = 'createdAt', sortType = 'desc', userId } = req.query as unknown as GetAllVideosQueryType;
+const getAllVideos = async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { page = '1', limit = '10', searchQuery, sortBy = 'createdAt', sortType = 'desc', userId } = req.query;
 
     const pipeline: PipelineStage[] = [];
 
@@ -440,8 +440,8 @@ const getAllVideos = async (req: Request, res: Response) => {
 
 
 
-const togglePublishStatus = async (req: Request, res: Response) => {
-    const { videoId } = req.params as unknown as VideoParams;
+const togglePublishStatus = async (req: Request<VideoParams>, res: Response) => {
+    const { videoId } = req.params;
 
     const video = await Video.findById(videoId);
 
