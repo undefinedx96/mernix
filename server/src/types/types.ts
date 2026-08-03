@@ -26,16 +26,6 @@ export type SubscriptionParams = {
     subscriberId: string;
 };
 
-export interface PlaylistBody {
-    name: string;
-    description: string;
-}
-
-export type PlaylistParams = {
-    playlistId: string;
-    videoId: string;
-};
-
 export interface ChannelStatsResponse {
     totalVideos: number;
     totalViews: number;
