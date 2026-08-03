@@ -17,13 +17,6 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
-export type TweetParams = {
-    tweetId: string;
-};
-
-export type TweetUserParams = {
-    userId: string;
-};
 
 export type ChannelParams = {
     channelId: string;
@@ -32,10 +25,6 @@ export type ChannelParams = {
 export type SubscriptionParams = {
     subscriberId: string;
 };
-
-export interface TweetBody {
-    content: string;
-}
 
 export interface PlaylistBody {
     name: string;

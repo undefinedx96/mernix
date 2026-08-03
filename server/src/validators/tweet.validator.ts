@@ -20,3 +20,11 @@ export const tweetParamsSchema = z.object({
 });
 
 export type TweetParams = z.infer<typeof tweetParamsSchema>;
+
+
+
+export const tweetUserParamsSchema = z.object({
+    userId: objectIdSchema
+});
+
+export type TweetUserParams = z.infer<typeof tweetUserParamsSchema>;
