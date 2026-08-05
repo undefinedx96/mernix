@@ -39,6 +39,11 @@ const playlistSchema = new Schema<IPlaylist>(
     }
 );
 
+playlistSchema.index(
+    { owner: 1, name: 1 },
+    { unique: true, collation: { locale: 'en', strength: 2 } }
+);
+
 playlistSchema.plugin(mongooseAggregatePaginate);
 
 export const Playlist = mongoose.model<IPlaylist, AggregatePaginateModel<IPlaylist>>('Playlist', playlistSchema);
