@@ -22,7 +22,7 @@ export type PlaylistBody = z.infer<typeof playlistBodySchema>;
 
 export const playlistParamsSchema = z.object({
     playlistId: objectIdSchema,
-    videoId: objectIdSchema
+    videoId: objectIdSchema.optional()
 });
 
 export type PlaylistParams = z.infer<typeof playlistParamsSchema>;
