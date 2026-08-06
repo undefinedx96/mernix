@@ -32,6 +32,19 @@ const likeSchema = new Schema<ILike>(
     }
 );
 
+likeSchema.index(
+    { video: 1, likedBy: 1 },
+    { unique: true, partialFilterExpression: { video: { $exists: true } } }
+);
+likeSchema.index(
+    { comment: 1, likedBy: 1 },
+    { unique: true, partialFilterExpression: { comment: { $exists: true } } }
+);
+likeSchema.index(
+    { tweet: 1, likedBy: 1 },
+    { unique: true, partialFilterExpression: { tweet: { $exists: true } } }
+);
+
 likeSchema.plugin(mongooseAggregatePaginate);
 
 export const Like = mongoose.model<ILike, AggregatePaginateModel<ILike>>('Like', likeSchema);

@@ -1,33 +1,30 @@
-import type { Request, Response } from 'express';
-import { asyncHandler } from '../utils/asyncHandler.ts';
-import { ApiError } from '../utils/ApiError.ts';
-import mongoose, { isValidObjectId } from 'mongoose';
-import { Video } from '../models/video.model.ts';
-import { Subscription } from '../models/subscription.model.ts';
-import { Like } from '../models/like.model.ts';
-import { ApiResponse } from '../utils/ApiResponse.ts';
-import type { ChannelStatsResponse, GetAllVideosQueryType } from '../types/types.ts';
-import type { PaginatedPlaylistResponse } from '../types/aggregation.types.ts';
+import type { Request, Response } from 'express'
+import { ApiError } from '../utils/ApiError.ts'
+import mongoose, { type PipelineStage } from 'mongoose'
+import { Video } from '../models/video.model.ts'
+import { Subscription } from '../models/subscription.model.ts'
+import { Like } from '../models/like.model.ts'
+import { ApiResponse } from '../utils/ApiResponse.ts'
+import type { ChannelVideoDataResponseObj, VideoStatsAggregateResult } from '../types/aggregation.types.ts'
+import type { ChannelStatsResponse } from '../validators/dashboard.validator.ts'
+import type { GetAllVideosQueryType } from '../validators/video.validator.ts'
 
 
 
-
-const getChannelStats = asyncHandler(async (req: Request, res: Response) =>{
+const getChannelStats = async (req: Request, res: Response) =>{
     const userId = req.user?._id;
 
     if (!userId) {
         throw new ApiError(401, 'Unauthenticated unauthorized request');
     }
 
-    if (!isValidObjectId(userId)) {
-        throw new ApiError(400, 'Invalid or missing user ID');
-    }
-
-    const [videoStats, totalSubscribers, totalLikes] = await Promise.all([
-        Video.aggregate([
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    
+    const [videoStats, totalSubscribers, channelVideoIds] = await Promise.all([
+        Video.aggregate<VideoStatsAggregateResult>([
             {
                 $match: {
-                    owner: new mongoose.Types.ObjectId(userId)
+                    owner: userObjectId
                 }
             },
             {
@@ -44,42 +41,25 @@ const getChannelStats = asyncHandler(async (req: Request, res: Response) =>{
         ]),
 
         Subscription.countDocuments({
-            channel: userId
+            channel: userObjectId
         }),
 
-        Like.aggregate([
-            {
-                $lookup: {
-                    from: 'videos',
-                    localField: 'video',
-                    foreignField: '_id',
-                    as: 'videoDetails'
-                }
-            },
-            {
-                $unwind: '$videoDetails'
-            },
-            {
-                $match: {
-                    'videoDetails.owner': new mongoose.Types.ObjectId(userId)
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalLikesCount: {
-                        $sum: 1
-                    }
-                }
-            }
-        ])
+        Video.find({ owner: userObjectId }).distinct('_id')
     ]);
+
+    const totalLikes = channelVideoIds.length > 0 
+        ? await Like.countDocuments({
+            video: {
+                $in: channelVideoIds
+            }
+        })
+        : 0;
 
     const allStats: ChannelStatsResponse = {
         totalVideos: videoStats[0]?.totalVideos || 0,
         totalViews: videoStats[0]?.totalViews || 0,
         subscribers: totalSubscribers || 0,
-        totalLikes: totalLikes[0]?.totalLikesCount || 0
+        totalLikes
     };
 
     // console.log('Video stats: ', videoStats);
@@ -94,12 +74,12 @@ const getChannelStats = asyncHandler(async (req: Request, res: Response) =>{
     .json(
         new ApiResponse(200, allStats, 'Channel stats fetched successfully')
     );
-});
+};
 
 
 
 
-const getChannelVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+const getChannelVideos = async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
     const userId = req.user?._id;
     const { page = '1', limit = '10' } = req.query;
 
@@ -107,14 +87,12 @@ const getChannelVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVide
         throw new ApiError(401, 'Unauthenticated unauthorized request');
     }
 
-    if (!isValidObjectId(userId)) {
-        throw new ApiError(400, 'Unauthenticated unauthorized request');
-    }
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
-    const videoAggregate = Video.aggregate([
+    const pipeline: PipelineStage[] = [
         {
             $match: {
-                owner: new mongoose.Types.ObjectId(userId)
+                owner: userObjectId
             }
         },
         {
@@ -122,16 +100,14 @@ const getChannelVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVide
                 createdAt: -1
             }
         }
-    ]);
+    ];
 
-    const videos = (await Video.aggregatePaginate(videoAggregate, {
+    const videoAggregate = Video.aggregate(pipeline);
+
+    const videos = await Video.aggregatePaginate<ChannelVideoDataResponseObj>(videoAggregate, {
         page: parseInt(page, 10),
-        limit: parseInt(limit, 10),
-        customLabels: {
-            totalDocs: 'totalVideos',
-            docs: 'videos'
-        }
-    })) as unknown as PaginatedPlaylistResponse;
+        limit: parseInt(limit, 10)
+    });
 
     // console.log('Videos: ', videos);
 
@@ -140,7 +116,7 @@ const getChannelVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVide
     .json(
         new ApiResponse(200, videos, 'Channel videos fetched successfully')
     );
-});
+};
 
 
 

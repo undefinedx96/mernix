@@ -1,19 +1,20 @@
 import type { Request, Response } from 'express'
-import { asyncHandler } from '../utils/asyncHandler.ts'
 import { ApiError } from '../utils/ApiError.ts'
-import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts';
-import { Video } from '../models/video.model.ts';
-import { ApiResponse } from '../utils/ApiResponse.ts';
-import mongoose, { type PipelineStage } from 'mongoose';
-import { User } from '../models/user.model.ts';
-import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts';
+import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
+import { Video } from '../models/video.model.ts'
+import { ApiResponse } from '../utils/ApiResponse.ts'
+import mongoose, { type PipelineStage } from 'mongoose'
+import { User } from '../models/user.model.ts'
+import type { VideoDetailDataResponseObj } from '../types/aggregation.types.ts'
 import type { PublishAVideoReqBody, VideoParams,  GetAllVideosQueryType, PublishVideoFiles, UpdateVideoReqBody } from '../validators/video.validator.ts'
+import { Like } from '../models/like.model.ts'
+import { Comment } from '../models/comment.model.ts'
 
 
 
 
 
-const publishAVideo = asyncHandler(async (req: Request<{}, {}, PublishAVideoReqBody>, res: Response) => {
+const publishAVideo = async (req: Request<{}, {}, PublishAVideoReqBody>, res: Response) => {
     const { title, description } = req.body;
     
     const files = (req.files as unknown) as PublishVideoFiles;
@@ -57,23 +58,35 @@ const publishAVideo = asyncHandler(async (req: Request<{}, {}, PublishAVideoReqB
         );
     }
     catch (error: any) {
+        const cleanUpPromises: Promise<unknown>[] = [];
+
         if (thumbnail?.public_id) {
-            await deleteFromCloudinary(thumbnail?.public_id, 'image');
+            cleanUpPromises.push(deleteFromCloudinary(thumbnail?.public_id, 'image'));
         }
 
         if (videoFile?.public_id) {
-            await deleteFromCloudinary(videoFile?.public_id, 'video');
+            cleanUpPromises.push(deleteFromCloudinary(videoFile?.public_id, 'video'));
         }
 
-        throw new ApiError(500, error?.message || 'Something went wrong while publishing the video');
+        if (cleanUpPromises.length > 0) {
+            await Promise.allSettled(cleanUpPromises);
+        }
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        const errorMessage = error instanceof Error ? error.message : 'Something went wrong while publishing the video';
+
+        throw new ApiError(500, errorMessage);
     }
-});
+};
 
 
 
 
-const getVideoById = asyncHandler(async (req: Request, res: Response) => {
-    const { videoId } = req.params as unknown as VideoParams;
+const getVideoById = async (req: Request<VideoParams>, res: Response) => {
+    const { videoId } = req.params;
 
     const updateTasks: Promise<any>[] = [
         Video.findByIdAndUpdate(
@@ -172,13 +185,13 @@ const getVideoById = asyncHandler(async (req: Request, res: Response) => {
     .json(
         new ApiResponse(200, video[0], 'Video details fetched successfully')
     );
-});
+};
 
 
 
 
-const updateVideo = asyncHandler(async (req: Request<{}, {}, UpdateVideoReqBody>, res: Response) => {
-    const { videoId } = req.params as unknown as VideoParams;
+const updateVideo = async (req: Request<VideoParams, {}, UpdateVideoReqBody>, res: Response) => {
+    const { videoId } = req.params;
 
     const { title, description } = req.body;
 
@@ -193,50 +206,70 @@ const updateVideo = asyncHandler(async (req: Request<{}, {}, UpdateVideoReqBody>
     }
 
     const thumbnailLocalPath = req.file?.path;
+    
+    const oldThumbnailPublicId = video.thumbnailPublicId;
 
     let uploadedThumbnail;
 
-    if (thumbnailLocalPath) {
-        uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
-        
-        if (!uploadedThumbnail) {
-            throw new ApiError(500, 'Failed to upload thumbnail on cloudinary');
-        }
+    try {
+        if (thumbnailLocalPath) {
+            uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
 
-        if (video.thumbnailPublicId) {
-            await deleteFromCloudinary(video.thumbnailPublicId, 'image');
-        }
-    }
-
-    const updatedVideo = await Video.findByIdAndUpdate(
-        videoId,
-        {
-            $set: {
-                title,
-                description,
-                thumbnail: uploadedThumbnail?.url || video.thumbnail,
-                thumbnailPublicId: uploadedThumbnail?.public_id || video.thumbnailPublicId
+            if (!uploadedThumbnail?.url) {
+                throw new ApiError(500, 'Failed to upload thumbnail to Cloudinary');
             }
-        },
-        {
-            returnDocument: 'after'
         }
-    );
 
-    // console.log('Updated video: ', updatedVideo);
+        const updatedVideo = await Video.findByIdAndUpdate(
+            videoId,
+            {
+                $set: {
+                    title: title ?? video.title,
+                    description: description ?? video.description,
+                    thumbnail: uploadedThumbnail?.url || video.thumbnail,
+                    thumbnailPublicId: uploadedThumbnail?.public_id || video.thumbnailPublicId
+                }
+            },
+            {
+                returnDocument: 'after'
+            }
+        );
 
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, updatedVideo, 'Video updated successfully')
-    );
-});
+        if (!updatedVideo) {
+            throw new ApiError(500, 'Failed to update video details in database');
+        }
+
+        // console.log('Updated video:', updateVideo);
+
+        if (thumbnailLocalPath && oldThumbnailPublicId) {
+            await deleteFromCloudinary(oldThumbnailPublicId, 'image');
+        }
+
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, updatedVideo, 'Video updated successfully')
+        );
+    }
+    catch (error) {
+        if (uploadedThumbnail?.public_id) {
+            await deleteFromCloudinary(uploadedThumbnail.public_id, 'image');
+        }
+
+        if (error instanceof ApiError) {
+            throw error;
+        }
+
+        const errorMessage = error instanceof Error ? error.message : 'Something went wrong while updating the video';
+        throw new ApiError(500, errorMessage);
+    }
+};
 
 
 
 
-const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
-    const { videoId } = req.params as unknown as VideoParams;
+const deleteVideo = async (req: Request<VideoParams>, res: Response) => {
+    const { videoId } = req.params;
 
     const video = await Video.findById(videoId);
 
@@ -248,15 +281,7 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(403, 'Unauthorized request! You do not own this video');
     }
 
-    if (video.videoFilePublicId) {
-        await deleteFromCloudinary(video.videoFilePublicId, 'video');
-    }
-
-    if (video.thumbnailPublicId) {
-        await deleteFromCloudinary(video.thumbnailPublicId, 'image');
-    }
-
-    const deleteVideoAndWatchHistory = await Promise.all([
+    await Promise.all([
         Video.findByIdAndDelete(videoId),
         User.updateMany(
             {
@@ -267,39 +292,59 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
                     watchHistory: videoId
                 }
             }
-        )
+        ),
+        Like.deleteMany({
+            video: videoId
+        }),
+        Comment.deleteMany({
+            video: videoId
+        })
     ]);
 
-    // console.log('Delete video and watch history: ', deleteVideoAndWatchHistory);
+    const cleanUpPromises: Promise<unknown>[] = [];
+
+    if (video.videoFilePublicId) {
+        cleanUpPromises.push(deleteFromCloudinary(video.videoFilePublicId, 'video'));
+    }
+
+    if (video.thumbnailPublicId) {
+        cleanUpPromises.push(deleteFromCloudinary(video.thumbnailPublicId, 'image'));
+    }
+
+    if (cleanUpPromises.length > 0) {
+        await Promise.allSettled(cleanUpPromises);
+    }
 
     return res
     .status(200)
     .json(
         new ApiResponse(200, {}, 'Video deleted and watch history purged successfully')
     );
-});
+};
 
 
 
 
-const getAllVideos = asyncHandler(async (req: Request, res: Response) => {
-    const { page = '1', limit = '10', searchQuery, sortBy = 'createdAt', sortType = 'desc', userId } = req.query as unknown as GetAllVideosQueryType;
+const getAllVideos = async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { page = '1', limit = '10', searchQuery, sortBy = 'createdAt', sortType = 'desc', userId } = req.query;
 
     const pipeline: PipelineStage[] = [];
 
     if (searchQuery) {
+        const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
         pipeline.push({
             $match: {
                 $or: [
                     {
                         title: {
-                            $regex: searchQuery,
+                            $regex: escapedQuery,
                             $options: 'i'
                         }
                     },
                     {
                         description: {
-                            $regex: searchQuery,
+                            $regex: escapedQuery,
                             $options: 'i'
                         }
                     }
@@ -390,13 +435,13 @@ const getAllVideos = asyncHandler(async (req: Request, res: Response) => {
     .json(
         new ApiResponse(200, allVideos, 'All videos fetched successfully')
     );
-});
+};
 
 
 
 
-const togglePublishStatus = asyncHandler(async (req: Request, res: Response) => {
-    const { videoId } = req.params as unknown as VideoParams;
+const togglePublishStatus = async (req: Request<VideoParams>, res: Response) => {
+    const { videoId } = req.params;
 
     const video = await Video.findById(videoId);
 
@@ -404,7 +449,7 @@ const togglePublishStatus = asyncHandler(async (req: Request, res: Response) => 
         throw new ApiError(404, 'Video does not exist');
     }
 
-    if (video?.owner.toString() !== req.user?._id.toString()) {
+    if (video.owner.toString() !== req.user?._id.toString()) {
         throw new ApiError(403, 'Unauthorized request! You cannot change the status of this video');
     }
 
@@ -424,7 +469,7 @@ const togglePublishStatus = asyncHandler(async (req: Request, res: Response) => 
             `Video publish status: ${video.isPublished? 'Published' : 'Unpublished'}`
         )
     );
-});
+};
 
 
 

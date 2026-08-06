@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import { uploadImage, uploadVideo } from './multer.middleware.ts'
-import { ApiError } from '../utils/ApiError.ts'
+import { ApiError, type ValidationError } from '../utils/ApiError.ts'
 import { cleanupTempFiles } from '../utils/cleanupTempFiles.ts'
 import { formatBytesToReadable } from '../utils/formatBytesToReadable.ts'
 
@@ -36,7 +36,7 @@ const validateFieldUploadLimits = (
 
             const filesMap = req.files as Record<string, Express.Multer.File[]> | undefined;
 
-            const validationErrors: { field: string; message: string }[] = [];
+            const validationErrors: ValidationError[] = [];
 
             if (filesMap) {
                 for (const field of fields) {

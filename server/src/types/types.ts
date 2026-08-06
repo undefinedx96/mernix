@@ -17,49 +17,8 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
-export type CommentParams = {
-    commentId: string;
-};
-
-export type TweetParams = {
-    tweetId: string;
-};
-
-export type TweetUserParams = {
-    userId: string;
-};
-
-export type ChannelParams = {
-    channelId: string;
-};
-
-export type SubscriptionParams = {
-    subscriberId: string;
-};
-
-export interface CommentBody {
-    content: string;
-}
-
-export interface TweetBody {
-    content: string;
-}
-
-export interface PlaylistBody {
-    name: string;
-    description: string;
-}
-
-export type PlaylistParams = {
-    playlistId: string;
-    videoId: string;
-};
-
-export interface ChannelStatsResponse {
-    totalVideos: number;
-    totalViews: number;
-    subscribers: number;
-    totalLikes: number;
+export interface HealthCheckStatus {
+    database: 'HEALTHY' | 'UNHEALTHY';
 }
 
 export interface HealthCheckResponse {
@@ -67,4 +26,5 @@ export interface HealthCheckResponse {
     uptime: number;
     timestamp: number;
     environment: string;
+    services: HealthCheckStatus;
 }

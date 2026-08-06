@@ -1,4 +1,3 @@
-import { asyncHandler } from '../utils/asyncHandler.ts'
 import { ApiError } from '../utils/ApiError.ts'
 import { User } from '../models/user.model.ts'
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.ts'
@@ -41,7 +40,7 @@ const generateAccessAndRefreshTokens = async (userId: string): Promise<TokenResp
 
 
 
-const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, res: Response) => {
+const registerUser = async (req: Request<{}, {}, RegisterReqBody>, res: Response) => {
     const { firstName, lastName, email, username, password } = req.body;
     // console.log(firstName, lastName, email, username, password);
     
@@ -59,44 +58,70 @@ const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterReqBody>, 
 
     const coverImageLocalPath = files.coverImage?.[0]?.path;
 
-    const avatar = avatarLocalPath ? await uploadOnCloudinary(avatarLocalPath) : null;
+    let avatar, coverImage;
 
-    const coverImage = coverImageLocalPath ? await uploadOnCloudinary(coverImageLocalPath) : null;
+    try {
+        [avatar, coverImage] = await Promise.all([
+            uploadOnCloudinary(avatarLocalPath),
+            coverImageLocalPath ? uploadOnCloudinary(coverImageLocalPath) : Promise.resolve(null)
+        ]);
 
-    if (!avatar) {
-        throw new ApiError(400, 'Avatar upload failed to process');
+        if (!avatar?.url) {
+            throw new ApiError(400, 'Avatar upload failed to process');
+        }
+
+        const createUser = await User.create({
+            firstName,
+            lastName,
+            username,
+            email,
+            avatar: avatar?.url,
+            avatarPublicId: avatar?.public_id,
+            coverImage: coverImage?.url || '',
+            coverImagePublicId: coverImage?.public_id,
+            password
+        });
+
+        const createdUser = await User.findById(createUser?._id).select('-password -refreshToken');
+
+        if (!createdUser) {
+            throw new ApiError(500, 'Something went wrong while registering the user');
+        }
+        // console.log(createUser)
+
+        return res
+        .status(201)
+        .json(
+            new ApiResponse(201, createdUser, 'User registered successfully')
+        );
     }
+    catch (error: any) {
+        const cleanUpPromises: Promise<unknown>[] = [];
 
-    const createUser = await User.create({
-        firstName,
-        lastName,
-        username,
-        email,
-        avatar: avatar?.url,
-        avatarPublicId: avatar?.public_id,
-        coverImage: coverImage?.url || '',
-        coverImagePublicId: coverImage?.public_id,
-        password
-    });
+        if (avatar?.public_id) {
+            cleanUpPromises.push(deleteFromCloudinary(avatar.public_id, 'image'));
+        }
 
-    const createdUser = await User.findById(createUser?._id).select('-password -refreshToken');
+        if (coverImage?.public_id) {
+            cleanUpPromises.push(deleteFromCloudinary(coverImage.public_id, 'image'));
+        }
 
-    if (!createdUser) {
-        throw new ApiError(500, 'Something went wrong while registering the user');
+        if (cleanUpPromises.length > 0) {
+            await Promise.allSettled(cleanUpPromises);
+        }
+
+        if (error instanceof ApiError) throw error;
+
+        const errorMessage = error instanceof Error ? error.message : 'Something went wrong while registering the user';
+
+        throw new ApiError(500, errorMessage);
     }
-    // console.log(createUser)
-
-    return res
-    .status(201)
-    .json(
-        new ApiResponse(201, createdUser, 'User registered successfully')
-    );
-});
+};
 
 
 
 
-const loginUser = asyncHandler(async (req: Request<{}, {}, LoginReqBody>, res: Response) => {
+const loginUser = async (req: Request<{}, {}, LoginReqBody>, res: Response) => {
     const { userIdentity, password } = req.body;
     // console.log(`User identifier: ${userIdentity}, Password ${password}`);
 
@@ -136,12 +161,12 @@ const loginUser = asyncHandler(async (req: Request<{}, {}, LoginReqBody>, res: R
             'User logged in successfully'
         )
     );
-});
+};
 
 
 
 
-const logoutUser = asyncHandler(async (req: Request, res: Response) => {
+const logoutUser = async (req: Request, res: Response) => {
     await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -161,12 +186,12 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
     .json(
         new ApiResponse(200, {}, 'User logged out successfully')
     );
-});
+};
 
 
 
 
-const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) => {
+const refreshTheAccessToken = async (req: Request, res: Response) => {
     const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.header('Authorization')?.replace('Bearer ', '').trim();
     // console.log('Incoming refresh token: ', incomingRefreshToken);
     
@@ -210,12 +235,12 @@ const refreshTheAccessToken = asyncHandler(async (req: Request, res: Response) =
     catch (error: any) {
         throw new ApiError(401, error?.message || 'Invalid refresh token');
     }
-});
+};
 
 
 
 
-const changeCurrentPassword = asyncHandler(async (req: Request<{}, {}, ChangeCurrentPasswordBody>, res: Response) => {
+const changeCurrentPassword = async (req: Request<{}, {}, ChangeCurrentPasswordBody>, res: Response) => {
     const { oldPassword, newPassword } = req.body;
     // console.log(`Old password: ${oldPassword}  New password: ${newPassword}`);
 
@@ -241,12 +266,12 @@ const changeCurrentPassword = asyncHandler(async (req: Request<{}, {}, ChangeCur
     .json(
         new ApiResponse(200, {}, 'Password changed successfully')
     );
-});
+};
 
 
 
 
-const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
+const getCurrentUser = async (req: Request, res: Response) => {
     const userId = req.user?._id;
 
     const user = await User.aggregate([
@@ -287,12 +312,12 @@ const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
     .json(
         new ApiResponse(200, user[0], 'Current user fetched successfully')
     );
-});
+};
 
 
 
 
-const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAccountDetailsBody>, res: Response) => {
+const updateAccountDetails = async (req: Request<{}, {}, UpdateAccountDetailsBody>, res: Response) => {
     const { firstName, lastName, email } = req.body;
     // console.log('Check email casing: ',email);
 
@@ -327,12 +352,12 @@ const updateAccountDetails = asyncHandler(async (req: Request<{}, {}, UpdateAcco
     .json(
         new ApiResponse(200, updatedUser, 'Account details updated successfully')
     );
-});
+};
 
 
 
 
-const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
+const updateUserAvatar = async (req: Request, res: Response) => {
     const avatarLocalPath = req.file?.path;
 
     if (!req.user?._id) {
@@ -348,43 +373,61 @@ const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
     const oldAvatarPublicId = user?.avatarPublicId;
     // console.log('Old avatar pub id: ', oldAvatarPublicId);
 
-    const avatar = avatarLocalPath ? await uploadOnCloudinary(avatarLocalPath) : null;
-    // console.log('Avatar: ', avatar);
+    let newAvatar;
 
-    if (!avatar?.url) {
-        throw new ApiError(500, 'Error while uploading avatar to cloudinary');
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            $set: {
-                avatar: avatar.url,
-                avatarPublicId: avatar.public_id
-            }
-        },
-        {
-            returnDocument: 'after'
+    try {
+        newAvatar = avatarLocalPath ? await uploadOnCloudinary(avatarLocalPath) : null;
+        // console.log('New Avatar: ', newAvatar);
+        
+        if (!newAvatar?.url) {
+            throw new ApiError(500, 'Error while uploading avatar to cloudinary');
         }
-    ).select('-password -refreshToken');
 
-    if (oldAvatarPublicId) {
-        await deleteFromCloudinary(oldAvatarPublicId);
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $set: {
+                    avatar: newAvatar.url,
+                    avatarPublicId: newAvatar.public_id
+                }
+            },
+            {
+                returnDocument: 'after'
+            }
+        ).select('-password -refreshToken');
+
+        if (!updatedUser) {
+            throw new ApiError(500, 'Failed to update user avatar in database');
+        }
+
+        if (oldAvatarPublicId) {
+            await deleteFromCloudinary(oldAvatarPublicId, 'image');
+        }
+
+        // console.log('Updated user: ', updatedUser);
+
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, updatedUser, 'Avatar updated successfully')
+        );
     }
+    catch (error: any) {
+        if (newAvatar?.public_id) {
+            await deleteFromCloudinary(newAvatar.public_id, 'image');
+        }
 
-    // console.log('Updated user: ', updatedUser);
+        if (error instanceof ApiError) throw error;
 
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, updatedUser, 'Avatar updated successfully')
-    );
-});
+        const errorMessage = error instanceof Error ? error.message : 'Something went wrong while updating user avatar';
+        throw new ApiError(500, errorMessage);
+    }
+};
 
 
 
 
-const updateUserCoverImage = asyncHandler(async (req: Request, res: Response) => {
+const updateUserCoverImage = async (req: Request, res: Response) => {
     const coverImageLocalPath = req.file?.path;
 
     if (!req.user?._id) {
@@ -404,49 +447,66 @@ const updateUserCoverImage = asyncHandler(async (req: Request, res: Response) =>
     if (!user) {
         throw new ApiError(404, 'User does not exist');
     }
-
+    
     const oldCoverImagePublicId = user?.coverImagePublicId;
     // console.log('Old cover pub id: ', oldCoverImagePublicId);
 
-    const coverImage = coverImageLocalPath ? await uploadOnCloudinary(coverImageLocalPath) : null;
-    // console.log('coverimage: ', coverImage);
+    let newCoverImage;
 
-    if (!coverImage?.url) {
-        throw new ApiError(500, 'Error while uploading cover image to cloudinary');
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            $set: {
-                coverImage: coverImage?.url,
-                coverImagePublicId: coverImage?.public_id
-            }
-        },
-        {
-            returnDocument: 'after'
+    try {
+        newCoverImage = coverImageLocalPath ? await uploadOnCloudinary(coverImageLocalPath) : null;
+        // console.log('coverimage: ', newCoverImage);
+    
+        if (!newCoverImage?.url) {
+            throw new ApiError(500, 'Error while uploading cover image to cloudinary');
         }
-    ).select('-password -refreshToken');
-
     
-    if (oldCoverImagePublicId) {
-        await deleteFromCloudinary(oldCoverImagePublicId);
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $set: {
+                    coverImage: newCoverImage?.url,
+                    coverImagePublicId: newCoverImage?.public_id
+                }
+            },
+            {
+                returnDocument: 'after'
+            }
+        ).select('-password -refreshToken');
+
+        if (!updatedUser) {
+            throw new ApiError(500, 'Failed to update user coverImage in database');
+        }
+
+        if (oldCoverImagePublicId) {
+            await deleteFromCloudinary(oldCoverImagePublicId, 'image');
+        }
+
+        // console.log('updated user: ', updatedUser);
+        
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, updatedUser, 'Cover image updated successfully')
+        );
     }
+    catch (error: any) {
+        if (newCoverImage?.public_id) {
+            await deleteFromCloudinary(newCoverImage.public_id, 'image');
+        }
 
-    // console.log('updated user: ', updatedUser);
-    
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, updatedUser, 'Cover image updated successfully')
-    );
-});
+        if (error instanceof ApiError) throw error;
+
+        const errorMessage = error instanceof Error ? error.message : 'Something went wrong while updating user cover image';
+        throw new ApiError(500, errorMessage);
+    }
+};
 
 
 
 
-const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) => {
-    const { username } = req.params as UserParams;
+const getUserChannelProfile = async (req: Request<UserParams>, res: Response) => {
+    const { username } = req.params;
 
     const channel = await User.aggregate<ChannelProfileDataResponseObj>([
         {
@@ -516,7 +576,7 @@ const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) =
     .json(
         new ApiResponse(200, channel[0], 'User channel fetched successfully')
     );
-});
+};
 
 
 
@@ -582,9 +642,9 @@ const getUserChannelProfile = asyncHandler(async (req: Request, res: Response) =
 
 
 
-const getWatchHistory = asyncHandler(async (req: Request, res: Response) => {
+const getWatchHistory = async (req: Request<{}, {}, {}, WatchHistoryQuery>, res: Response) => {
 
-    const { page = '1', limit = '10' } = req.query as unknown as WatchHistoryQuery;
+    const { page = '1', limit = '10' } = req.query;
 
     const user = await User.findById(req.user?._id).select('watchHistory');
 
@@ -664,7 +724,7 @@ const getWatchHistory = asyncHandler(async (req: Request, res: Response) => {
     .json(
         new ApiResponse(200, paginatedWatchHistory, 'Watch history fetched successfully')
     );
-});
+};
 
 
 

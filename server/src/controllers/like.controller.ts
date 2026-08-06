@@ -1,14 +1,15 @@
-
-import type { Request, Response } from 'express';
-import { asyncHandler } from '../utils/asyncHandler.ts'
-import type { CommentParams, GetAllVideosQueryType, TweetParams, VideoParams } from '../types/types.ts';
-import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose';
-import { ApiError } from '../utils/ApiError.ts';
-import { Video } from '../models/video.model.ts';
-import { Like } from '../models/like.model.ts';
-import { ApiResponse } from '../utils/ApiResponse.ts';
-import { Comment } from '../models/comment.model.ts';
-import { Tweet } from '../models/tweet.model.ts';
+import type { Request, Response } from 'express'
+import type { PipelineStage } from 'mongoose'
+import { ApiError } from '../utils/ApiError.ts'
+import { Video } from '../models/video.model.ts'
+import { Like } from '../models/like.model.ts'
+import { ApiResponse } from '../utils/ApiResponse.ts'
+import { Comment } from '../models/comment.model.ts'
+import { Tweet } from '../models/tweet.model.ts'
+import type { GetAllVideosQueryType, VideoParams } from '../validators/video.validator.ts'
+import type { CommentParams } from '../validators/comment.validator.ts'
+import type { TweetParams } from '../validators/tweet.validator.ts'
+import mongoose from 'mongoose'
 
 
 
@@ -55,66 +56,70 @@ import { Tweet } from '../models/tweet.model.ts';
 // ============= MULTIPLE DB TRIPS WHICH MIGHT FEEL SLOW =============
 
 
-// ============= FASTER METHOD FOR LIKE/UNLIKE TOGGLE WITH DELETEONE() AND EXISTS() =============
-const toggleVideoLike = asyncHandler(async (req: Request, res: Response) => {
-    const { videoId } = req.params as VideoParams;
+// ============= FASTER METHOD FOR LIKE/UNLIKE TOGGLE WITH FINDONEANDDELETE() AND EXISTS() =============
+const toggleVideoLike = async (req: Request<VideoParams>, res: Response) => {
+    const { videoId } = req.params;
 
-    if (!isValidObjectId(videoId)) {
-        throw new ApiError(400, 'Invalid or missing video ID');
-    }
-
-    const unliked = await Like.deleteOne({
+    const unliked = await Like.findOneAndDelete({
         video: videoId,
         likedBy: req.user?._id
     });
 
-    if (unliked.deletedCount > 0) {
+    if (unliked) {
         return res
         .status(200)
         .json(
-            new ApiResponse(200, {isLiked: false}, 'Video unliked successfully')
+            new ApiResponse(200, { isLiked: false }, 'Video unliked successfully')
         );
     }
 
     const videoExists = await Video.exists({ _id: videoId });
 
     if (!videoExists) {
-        throw new ApiError(404, 'Video does not exist')
+        throw new ApiError(404, 'Video does not exist');
     }
 
-    await Like.create({
-        video: videoId,
-        likedBy: req.user?._id
-    });
+    await Like.findOneAndUpdate(
+        {
+            video: videoId,
+            likedBy: req.user?._id
+        },
+        {
+            $setOnInsert: {
+                video: videoId,
+                likedBy: req.user?._id
+            }
+        },
+        {
+            upsert: true,
+            returnDocument: 'after'
+        }
+    );
 
     return res
     .status(201)
     .json(
         new ApiResponse(201, {isLiked: true}, 'Video liked successfully')
     );
-});
-// ============= FASTER METHOD FOR LIKE/UNLIKE TOGGLE WITH DELETEONE() AND EXISTS() =============
+};
+// ============= FASTER METHOD FOR LIKE/UNLIKE TOGGLE WITH FINDONEANDDELETE() AND EXISTS() =============
 
 
 
 
-const toggleCommentLike = asyncHandler(async (req: Request, res: Response) => {
-    const { commentId } = req.params as CommentParams;
+const toggleCommentLike = async (req: Request<CommentParams>, res: Response) => {
+    const { commentId } = req.params;
 
-    if (!isValidObjectId(commentId)) {
-        throw new ApiError(400, 'Invalid or missing comment ID');
-    }
-
-    const unliked = await Like.deleteOne({
+    const unliked = await Like.findOneAndDelete({
         comment: commentId,
         likedBy: req.user?._id
     });
 
-    if (unliked.deletedCount > 0) {
+    if (unliked) {
         return res
         .status(200)
         .json(
-            new ApiResponse(200, {isLiked: false}, 'Comment unliked successfully')
+            new ApiResponse(200, { isLiked: false }, 'Comment unliked successfully')
         );
     }
 
@@ -124,38 +129,46 @@ const toggleCommentLike = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(404, 'Comment does not exist');
     }
 
-    await Like.create({
-        comment: commentId,
-        likedBy: req.user?._id
-    });
+    await Like.findOneAndUpdate(
+        {
+            comment: commentId,
+            likedBy: req.user?._id
+        },
+        {
+            $setOnInsert: {
+                comment: commentId,
+                likedBy: req.user?._id
+            }
+        },
+        {
+            upsert: true,
+            returnDocument: 'after'
+        }
+    );
 
     return res
     .status(201)
     .json(
-        new ApiResponse(201, {isLiked: true}, 'Comment liked successfully')
+        new ApiResponse(201, { isLiked: true }, 'Comment liked successfully')
     );
-});
+};
 
 
 
 
-const toggleTweetLike = asyncHandler(async (req: Request, res: Response) => {
-    const { tweetId } = req.params as TweetParams;
+const toggleTweetLike = async (req: Request<TweetParams>, res: Response) => {
+    const { tweetId } = req.params;
 
-    if (!isValidObjectId(tweetId)) {
-        throw new ApiError(400, 'Invalid or missing tweet ID');
-    }
-
-    const unliked = await Like.deleteOne({
+    const unliked = await Like.findOneAndDelete({
         tweet: tweetId,
         likedBy: req.user?._id
     });
 
-    if (unliked.deletedCount > 0) {
+    if (unliked) {
         return res
         .status(200)
         .json(
-            new ApiResponse(200, {isLiked: false}, 'Tweet unliked successfully')
+            new ApiResponse(200, { isLiked: false }, 'Tweet unliked successfully')
         );
     }
 
@@ -165,38 +178,51 @@ const toggleTweetLike = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(404, 'Tweet does not exist');
     }
 
-    await Like.create({
-        tweet: tweetId,
-        likedBy: req.user?._id
-    });
+    await Like.findOneAndUpdate(
+        {
+            tweet: tweetId,
+            likedBy: req.user?._id
+        },
+        {
+            $setOnInsert: {
+                tweet: tweetId,
+                likedBy: req.user?._id
+            }
+        },
+        {
+            upsert: true,
+            returnDocument: 'after'
+        }
+    );
 
     return res
     .status(201)
     .json(
         new ApiResponse(201, {isLiked: true}, 'Tweet liked successfully')
     );
-});
+};
 
 
 
 
-const getLikedVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
+const getLikedVideos = async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
     const { page = '1', limit = '10' } = req.query;
     
     const userId = req.user?._id;
 
-    // if (!isValidObjectId(userId)) {
-    //     throw new ApiError(400, 'Invalid or missing uer ID');
-    // }
-
     const pipeline: PipelineStage[] = [
         {
             $match: {
-                likedBy: userId,
+                likedBy: new mongoose.Types.ObjectId(userId),
                 video: {
                     $exists: true,
                     $ne: null
                 },
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
             }
         },
         {
@@ -237,11 +263,6 @@ const getLikedVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideos
             $replaceRoot: {
                 newRoot: '$video'
             }
-        },
-        {
-            $sort: {
-                createdAt: -1
-            }
         }
     ];
 
@@ -261,7 +282,7 @@ const getLikedVideos = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideos
     .json(
         new ApiResponse(200, likedVideos, 'Liked videos fetched successfully')
     );
-});
+};
 
 
 
