@@ -17,9 +17,14 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
+export interface HealthCheckStatus {
+    database: 'HEALTHY' | 'UNHEALTHY';
+}
+
 export interface HealthCheckResponse {
     status: string;
     uptime: number;
     timestamp: number;
     environment: string;
+    services: HealthCheckStatus;
 }
