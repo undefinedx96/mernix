@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose'
+import mongoose, { type PipelineStage } from 'mongoose'
 import { ApiError } from '../utils/ApiError.ts'
 import { User } from '../models/user.model.ts'
 import { Subscription } from '../models/subscription.model.ts'
