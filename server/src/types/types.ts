@@ -17,13 +17,6 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
-export interface ChannelStatsResponse {
-    totalVideos: number;
-    totalViews: number;
-    subscribers: number;
-    totalLikes: number;
-}
-
 export interface HealthCheckResponse {
     status: string;
     uptime: number;
