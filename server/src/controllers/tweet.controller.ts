@@ -1,69 +1,43 @@
-import type { Request, Response } from 'express';
-import { asyncHandler } from '../utils/asyncHandler.ts';
-import type { GetAllVideosQueryType, TweetBody, TweetParams, TweetUserParams } from '../types/types.ts';
-import { ApiError } from '../utils/ApiError.ts';
-import { Tweet } from '../models/tweet.model.ts';
-import { ApiResponse } from '../utils/ApiResponse.ts';
-import mongoose, { isValidObjectId } from 'mongoose';
-import { Like } from '../models/like.model.ts';
-import { User } from '../models/user.model.ts';
+import type { Request, Response } from 'express'
+import { ApiError } from '../utils/ApiError.ts'
+import { Tweet } from '../models/tweet.model.ts'
+import { ApiResponse } from '../utils/ApiResponse.ts'
+import mongoose from 'mongoose'
+import { Like } from '../models/like.model.ts'
+import type { TweetBody, TweetParams, TweetUserParams } from '../validators/tweet.validator.ts'
+import type { GetAllVideosQueryType } from '../validators/video.validator.ts'
 
 
 
 
-const createTweet = asyncHandler(async (req: Request<{}, {}, TweetBody>, res: Response) => {
+const createTweet = async (req: Request<{}, {}, TweetBody>, res: Response) => {
     const { content } = req.body;
 
-    if (!content?.trim()) {
-        throw new ApiError(400, 'Tweet content is required');
-    }
-
-    if (content.trim().length > 280) {
-        throw new ApiError(400, 'Tweet content cannot exceed 280 characters');
-    }
-
     const tweet = await Tweet.create({
-        content: content.trim(),
+        content,
         owner: req.user?._id
     });
 
     if (!tweet) {
         throw new ApiError(500, 'Falied to create tweet');
     }
+    
+    await tweet.populate('owner', 'username avatar firstName lastName');
     // console.log('Tweet: ', tweet);
-
-    const createdTweet = await Tweet.findById(tweet._id).populate('owner', 'username avatar firstName lastName');
-    // console.log('Created tweet: ', createTweet);
-
-    if (!createTweet) {
-        throw new ApiError(500, 'Failed to retreive tweet');
-    }
-
+    
     return res
     .status(201)
     .json(
-        new ApiResponse(201, createdTweet, 'Tweet created successfully')
+        new ApiResponse(201, tweet, 'Tweet created successfully')
     );
-});
+};
 
 
 
 
-const updateTweet = asyncHandler(async(req: Request<{}, {}, TweetBody>, res: Response) => {
-    const { tweetId } = req.params as TweetParams;
+const updateTweet = async(req: Request<TweetParams, {}, TweetBody>, res: Response) => {
+    const { tweetId } = req.params;
     const { content } = req.body;
-
-    if (!isValidObjectId(tweetId)) {
-        throw new ApiError(400, 'Invalid or missing tweet ID');
-    }
-
-    if (!content?.trim()) {
-        throw new ApiError(400, 'Tweet content is required');
-    }
-
-    if (content.trim().length > 280) {
-        throw new ApiError(400, 'Tweet content cannot exceed 280 characters');
-    }
 
     const updatedTweet = await Tweet.findOneAndUpdate(
         {
@@ -72,7 +46,7 @@ const updateTweet = asyncHandler(async(req: Request<{}, {}, TweetBody>, res: Res
         },
         {
             $set: {
-                content: content.trim()
+                content
             }
         },
         {
@@ -90,61 +64,47 @@ const updateTweet = asyncHandler(async(req: Request<{}, {}, TweetBody>, res: Res
     .json(
         new ApiResponse(200, updatedTweet, 'Tweet updated successfully')
     );
-});
+};
 
 
 
 
-const deleteTweet = asyncHandler(async(req: Request, res: Response) => {
-    const { tweetId } = req.params as TweetParams;
+const deleteTweet = async(req: Request<TweetParams>, res: Response) => {
+    const { tweetId } = req.params;
 
-    if (!isValidObjectId(tweetId)) {
-        throw new ApiError(400, 'Invalid or missing tweet ID');
+    const deletedTweet = await Tweet.findOneAndDelete({
+        _id: tweetId,
+        owner: req.user?._id
+    });
+
+    if (!deletedTweet) {
+        throw new ApiError(404, 'Tweet not found or you are not authorized to delete it');
     }
-
-    const tweet = await Tweet.findById(tweetId);
-
-    if (!tweet) {
-        throw new ApiError(404, 'Tweet does not exist');
-    }
-
-    if (tweet.owner.toString() !== req.user?._id.toString()) {
-        throw new ApiError(403, 'Unauthorized! You do not have permission to delete this tweet');
-    }
-
-    await Promise.all([
-        Tweet.findByIdAndDelete(tweetId),
-        Like.deleteMany({ tweet: tweetId })
-    ]);
+    
+    await Like.deleteMany({ tweet: tweetId });
 
     return res
     .status(200)
     .json(
         new ApiResponse(200, { tweetId }, 'Tweet deleted successfully')
     );
-});
+};
 
 
 
 
-const getUserTweets = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
-    const { userId } = req.params as TweetUserParams;
+const getUserTweets = async (req: Request<TweetUserParams, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { userId } = req.params;
     const { page = '1', limit = '10' } = req.query;
 
-    if (!isValidObjectId(userId)) {
-        throw new ApiError(400, 'Invalid or missing user ID');
-    }
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
-    const userExists = await User.exists({ _id: userId });
-
-    if (!userExists) {
-        throw new ApiError(404, 'User does not exist');
-    }
+    const currentUser = req.user?._id ? new mongoose.Types.ObjectId(req.user._id) : null;
 
     const tweetAggregate = Tweet.aggregate([
         {
             $match: {
-                owner: new mongoose.Types.ObjectId(userId)
+                owner: userObjectId
             }
         },
         {
@@ -192,7 +152,7 @@ const getUserTweets = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQ
                 },
                 isLiked: {
                     $cond: {
-                        if: { $in: [req.user?._id, '$likes.likedBy'] },
+                        if: { $in: [currentUser, '$likes.likedBy'] },
                         then: true,
                         else: false
                     }
@@ -209,11 +169,7 @@ const getUserTweets = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQ
 
     const tweets = await Tweet.aggregatePaginate(tweetAggregate, {
         page: parseInt(page, 10),
-        limit: parseInt(limit, 10),
-        customLabels: {
-            totalDocs: 'totalTweets',
-            docs: 'tweets'
-        }
+        limit: parseInt(limit, 10)
     });
     // console.log('Tweets: ', tweets);
 
@@ -222,7 +178,7 @@ const getUserTweets = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQ
     .json(
         new ApiResponse(200, tweets, 'User tweets fetched successfully')
     );
-});
+};
 
 
 

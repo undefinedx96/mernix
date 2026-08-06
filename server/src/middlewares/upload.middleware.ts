@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express'
-import multer from 'multer'
-import { uploadImage } from './multer.middleware.ts'
-import { ApiError } from '../utils/ApiError.ts'
-import fs from 'node:fs/promises'
+import { uploadImage, uploadVideo } from './multer.middleware.ts'
+import { ApiError, type ValidationError } from '../utils/ApiError.ts'
+import { cleanupTempFiles } from '../utils/cleanupTempFiles.ts'
+import { formatBytesToReadable } from '../utils/formatBytesToReadable.ts'
 
 
 
@@ -13,24 +13,30 @@ interface FieldLimit {
 }
 
 
-const AVATAR_MAX = 200 * 1024;
-const COVER_MAX = 200 * 1024;
+export const AVATAR_MAX = 200 * 1024;
+export const COVER_MAX = 200 * 1024;
+
+export const THUMBNAIL_MAX = 200 * 1024;
+export const VIDEO_MAX = 5 * 1024 * 1024;
 
 
-const validateFieldUploadLimits = (fields: FieldLimit[]) => {
+const validateFieldUploadLimits = (
+    multerInstance: typeof uploadImage | typeof uploadVideo,
+    fields: FieldLimit[]
+) => {
     const multerFieldsConfig = fields.map(({ name, maxCount }) => ({ name, maxCount }));
 
-    const uploadFields = uploadImage.fields(multerFieldsConfig);
+    const uploadFields = multerInstance.fields(multerFieldsConfig);
 
     return (req: Request, res: Response, next: NextFunction) => {
         uploadFields(req, res, async (err) => {
             if (err) {
-                return next(err instanceof multer.MulterError ? new ApiError(400, err.message) : err);
+                return next(err);
             }
 
             const filesMap = req.files as Record<string, Express.Multer.File[]> | undefined;
 
-            const validationErrors: { field: string; message: string }[] = [];
+            const validationErrors: ValidationError[] = [];
 
             if (filesMap) {
                 for (const field of fields) {
@@ -41,7 +47,7 @@ const validateFieldUploadLimits = (fields: FieldLimit[]) => {
                             if (file.size > field.maxSize) {
                                 validationErrors.push({
                                     field: field.name,
-                                    message: `${field.name.charAt(0).toUpperCase() + field.name.slice(1)} size limit exceeded. Max allowed is ${field.maxSize / 1024}KB`
+                                    message: `${field.name.charAt(0).toUpperCase() + field.name.slice(1)} size limit exceeded. Max allowed is ${formatBytesToReadable(field.maxSize)}`
                                 });
                             }
                         }
@@ -51,22 +57,7 @@ const validateFieldUploadLimits = (fields: FieldLimit[]) => {
 
             // if validation fails, sweep and delete the files
             if (validationErrors.length > 0) {
-                const cleanupPromises: Promise<void>[] = [];
-
-                if (filesMap) {
-                    for(const fieldKey in filesMap) {
-                        const fileArray = filesMap[fieldKey];
-                        if (Array.isArray(fileArray)) {
-                            fileArray.forEach((file) => {
-                                if (file.path) {
-                                    cleanupPromises.push(fs.unlink(file.path).catch(() => {}))
-                                }
-                            });
-                        }
-                    }
-                }
-                
-                await Promise.all(cleanupPromises);
+                await cleanupTempFiles(req);
                 return next(new ApiError(400, 'Validation failed', validationErrors));
             }
 
@@ -76,6 +67,7 @@ const validateFieldUploadLimits = (fields: FieldLimit[]) => {
 };
 
 export const handleRegisterUploads = validateFieldUploadLimits(
+    uploadImage,
     [
         {
             name: 'avatar',
@@ -86,6 +78,22 @@ export const handleRegisterUploads = validateFieldUploadLimits(
             name: 'coverImage',
             maxCount: 1,
             maxSize: COVER_MAX
+        }
+    ]
+);
+
+export const handlePublishVideoUploads = validateFieldUploadLimits(
+    uploadVideo,
+    [
+        {
+            name: 'videoFile',
+            maxCount: 1,
+            maxSize: VIDEO_MAX
+        },
+        {
+            name: 'thumbnail',
+            maxCount: 1,
+            maxSize: THUMBNAIL_MAX
         }
     ]
 );

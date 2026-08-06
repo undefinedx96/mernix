@@ -22,7 +22,7 @@ const strongPasswordSchema = z
 /**
  * MULTI-FIELD UPLOAD SCHEMA (For `req.files`)
  */
-const multerFileSchema = z
+export const multerFileSchema = z
     .custom<Express.Multer.File>()
     .superRefine((file, ctx) => {
         const currentField = file?.fieldname || 'file';
@@ -42,7 +42,7 @@ const multerFileSchema = z
  * 
  * SINGLE FILE UPLOAD SCHEMA (For `req.file`)
  */
-const createSingleFileSchema = (fallbackFieldName: string, isOptional = false) => {
+export const createSingleFileSchema = (fallbackFieldName: string, isOptional = false) => {
     return z.custom<Express.Multer.File | undefined>().superRefine((file, ctx) => {
         if(isOptional && !file) return;
 
