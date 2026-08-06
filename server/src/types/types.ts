@@ -17,15 +17,6 @@ export interface TokenResponse {
     refreshToken: string;
 }
 
-
-export type ChannelParams = {
-    channelId: string;
-};
-
-export type SubscriptionParams = {
-    subscriberId: string;
-};
-
 export interface ChannelStatsResponse {
     totalVideos: number;
     totalViews: number;
