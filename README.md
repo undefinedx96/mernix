@@ -33,10 +33,10 @@ Mernix is being developed as a large-scale learning project focused on real-worl
 - [x] Cloudinary Integration
 - [x] MongoDB Aggregation Pipelines
 - [x] Analytics Dashboard
+- [x] Zod Validation for Text Fields and File Uploads in `server`
 
 ### In Progress
 
-- [ ] Zod Validation for Text Fields and File Uploads
 - [ ] Advanced Video Playback
 - [ ] Creator Dashboard
 - [ ] Video Upload Management
