@@ -1,23 +1,22 @@
 import type { Request, Response } from 'express';
-import { asyncHandler } from '../utils/asyncHandler.ts';
-import type { ChannelParams, GetAllVideosQueryType, SubscriptionParams } from '../types/types.ts';
 import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose';
 import { ApiError } from '../utils/ApiError.ts';
 import { User } from '../models/user.model.ts';
 import { Subscription } from '../models/subscription.model.ts';
 import { ApiResponse } from '../utils/ApiResponse.ts';
+import type { ChannelParams, SubscriptionParams } from '../validators/subscription.validator.ts';
+import type { GetAllVideosQueryType } from '../validators/video.validator.ts';
+import type { ChannelSubscriberDataResponseObj, SubscribedChannelDataResponseObj } from '../types/aggregation.types.ts';
 
 
 
 
-const toggleSubscription = asyncHandler(async (req: Request, res: Response) => {
-    const { channelId } = req.params as ChannelParams;
+const toggleSubscription = async (req: Request<ChannelParams>, res: Response) => {
+    const { channelId } = req.params;
 
-    if (!isValidObjectId(channelId)) {
-        throw new ApiError(400, 'Invalid or missing channel ID');
-    }
+    const subscriberId = req.user?._id;
 
-    if (channelId.toString() === req.user?._id.toString()) {
+    if (channelId.toString() === subscriberId?.toString()) {
         throw new ApiError(400, 'You cannot subscribe your own channel');
     }
 
@@ -27,14 +26,13 @@ const toggleSubscription = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(404, 'Channel does not exist');
     }
 
-    const existingSubscription = await Subscription.findOne({
-        subscriber: req.user?._id,
+    const existingSubscription = await Subscription.findOneAndDelete({
+        subscriber: subscriberId,
         channel: channelId
     });
     // console.log('Existing subs: ', existingSubscription);
 
     if (existingSubscription) {
-        await Subscription.findByIdAndDelete(existingSubscription?._id);
         return res
         .status(200)
         .json(
@@ -42,34 +40,28 @@ const toggleSubscription = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const newSubscription = await Subscription.create({
-        subscriber: req.user?._id,
+    await Subscription.create({
+        subscriber: subscriberId,
         channel: channelId
     });
-
-    if (!newSubscription) {
-        throw new ApiError(500, 'Something went wrong while subscribing');
-    }
 
     return res
     .status(201)
     .json(
         new ApiResponse(201, { isSubscribed: true }, 'Channel subscribed successfully')
     );
-});
+};
 
 
 
 
-const getUserChannelSubscribers = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
-    const { channelId } = req.params as ChannelParams;
+const getUserChannelSubscribers = async (req: Request<ChannelParams, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { channelId } = req.params;
     const { page = '1', limit = '10' } = req.query;
 
-    if (!isValidObjectId(channelId)) {
-        throw new ApiError(400, 'Invalid or missing channel ID');
-    }
+    const channelObjectId = new mongoose.Types.ObjectId(channelId);
 
-    const channelExists = await User.exists({ _id: channelId });
+    const channelExists = await User.exists({ _id: channelObjectId });
 
     if (!channelExists) {
         throw new ApiError(404, 'Channel does not exist');
@@ -79,10 +71,15 @@ const getUserChannelSubscribers = asyncHandler(async (req: Request<{}, {}, {}, G
         throw new ApiError(403, 'Unauthorized! Only the channel owner can view their subscriber list');
     }
 
-    const subscriberAggregate = Subscription.aggregate([
+    const pipeline: PipelineStage[] = [
         {
             $match: {
-                channel: new mongoose.Types.ObjectId(channelId)
+                channel: channelObjectId
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
             }
         },
         {
@@ -104,54 +101,42 @@ const getUserChannelSubscribers = asyncHandler(async (req: Request<{}, {}, {}, G
             }
         },
         {
-            $addFields: {
-                subscriber: {
-                    $first: '$subscriber'
-                }
-            }
-        },
-        {
-            $sort: {
-                createdAt: -1
-            }
+            $unwind: '$subscriber'
         },
         {
             $project: {
+                _id: 1,
                 subscriber: 1,
                 createdAt: 1
             }
         }
-    ]);
+    ];
 
-    const subscribers = await Subscription.aggregatePaginate(subscriberAggregate, {
+    const subscriberAggregate = Subscription.aggregate(pipeline);
+
+    const subscribers = await Subscription.aggregatePaginate<ChannelSubscriberDataResponseObj>(subscriberAggregate, {
         page: parseInt(page, 10),
-        limit: parseInt(limit, 10),
-        customLabels: {
-            totalDocs: 'subscribersCount',
-            docs: 'subscribers'
-        }
+        limit: parseInt(limit, 10)
     });
     // console.log('Subscribers: ', subscribers);
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200, subscribers, `Subscribers of channel ${channelExists._id} fetched successfully`)
+        new ApiResponse(200, subscribers, 'Channel subscribers fetched successfully')
     );
-});
+};
 
 
 
 
-const getSubscribedChannels = asyncHandler(async (req: Request<{}, {}, {}, GetAllVideosQueryType>, res: Response) => {
-    const { subscriberId } = req.params as SubscriptionParams;
+const getSubscribedChannels = async (req: Request<SubscriptionParams, {}, {}, GetAllVideosQueryType>, res: Response) => {
+    const { subscriberId } = req.params;
     const { page = '1', limit = '10' } = req.query;
 
-    if (!isValidObjectId(subscriberId)) {
-        throw new ApiError(400, 'Invalid or missing subscriber ID');
-    }
+    const subscriberObjectId = new mongoose.Types.ObjectId(req.user?._id);
 
-    const existingSubscriber = await User.exists({ _id: subscriberId });
+    const existingSubscriber = await User.exists({ _id: subscriberObjectId });
 
     if (!existingSubscriber) {
         throw new ApiError(404, 'Subscriber does not exist');
@@ -161,10 +146,15 @@ const getSubscribedChannels = asyncHandler(async (req: Request<{}, {}, {}, GetAl
         throw new ApiError(403, "Unauthorized! You do not have permission to view another user's subscription list");
     }
 
-    const subscriptionAggregate = Subscription.aggregate([
+    const pipeline: PipelineStage[] = [
         {
             $match: {
-                subscriber: new mongoose.Types.ObjectId(subscriberId)
+                subscriber: subscriberObjectId
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
             }
         },
         {
@@ -175,52 +165,70 @@ const getSubscribedChannels = asyncHandler(async (req: Request<{}, {}, {}, GetAl
                 as: 'channel',
                 pipeline: [
                     {
+                        $lookup: {
+                            from: 'videos',
+                            localField: '_id',
+                            foreignField: 'owner',
+                            as: 'videos',
+                            pipeline: [
+                                {
+                                    $match: {
+                                        isPublished: true
+                                    }
+                                },
+                                {
+                                    $project: {
+                                        _id: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            totalVideos: {
+                                $size: '$videos'
+                            }
+                        }
+                    },
+                    {
                         $project: {
                             firstName: 1,
                             lastName: 1,
                             username: 1,
-                            avatar: 1
+                            avatar: 1,
+                            totalVideos: 1
                         }
                     }
                 ]
             }
         },
         {
-            $addFields: {
-                channel: {
-                    $first: '$channel'
-                }
-            }
-        },
-        {
-            $sort: {
-                createdAt: -1
-            }
+            $unwind: '$channel'
         },
         {
             $project: {
+                _id: 1,
                 channel: 1,
                 createdAt: 1
             }
         }
-    ]);
+    ];
+
+    const subscriptionAggregate = Subscription.aggregate(pipeline);
     
-    const subscribedChannels = await Subscription.aggregatePaginate(subscriptionAggregate, {
+    const subscribedChannels = await Subscription.aggregatePaginate<SubscribedChannelDataResponseObj>(subscriptionAggregate, {
         page: parseInt(page, 10),
-        limit: parseInt(limit, 10),
-        customLabels: {
-            totalDocs: 'subscribedChannelsCount',
-            docs: 'subscribedChannels'
-        }
+        limit: parseInt(limit, 10)
     });
     // console.log('Subscribed channels: ', subscribedChannels);
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200, subscribedChannels, `Subscribed channels of user ${existingSubscriber._id} fetched successfully`)
+        new ApiResponse(200, subscribedChannels, 'Subscribed channels fetched successfully')
     );
-});
+};
 
 
 

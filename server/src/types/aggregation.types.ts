@@ -32,3 +32,15 @@ export interface UserPlaylistSummary {
     thumbnailVideo: string;
     updatedAt: Date;
 }
+
+export interface ChannelSubscriberDataResponseObj extends BaseResponse {
+    subscriber: VideoOwnerDataResponseObj;
+    createdAt: Date;
+}
+
+export interface SubscribedChannelDataResponseObj extends BaseResponse {
+    channel: VideoOwnerDataResponseObj & {
+        totalVideos: number;
+    };
+    createdAt: Date;
+}
