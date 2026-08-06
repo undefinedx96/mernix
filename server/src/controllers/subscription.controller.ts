@@ -1,12 +1,12 @@
-import type { Request, Response } from 'express';
-import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose';
-import { ApiError } from '../utils/ApiError.ts';
-import { User } from '../models/user.model.ts';
-import { Subscription } from '../models/subscription.model.ts';
-import { ApiResponse } from '../utils/ApiResponse.ts';
-import type { ChannelParams, SubscriptionParams } from '../validators/subscription.validator.ts';
-import type { GetAllVideosQueryType } from '../validators/video.validator.ts';
-import type { ChannelSubscriberDataResponseObj, SubscribedChannelDataResponseObj } from '../types/aggregation.types.ts';
+import type { Request, Response } from 'express'
+import mongoose, { isValidObjectId, type PipelineStage } from 'mongoose'
+import { ApiError } from '../utils/ApiError.ts'
+import { User } from '../models/user.model.ts'
+import { Subscription } from '../models/subscription.model.ts'
+import { ApiResponse } from '../utils/ApiResponse.ts'
+import type { ChannelParams, SubscriptionParams } from '../validators/subscription.validator.ts'
+import type { GetAllVideosQueryType } from '../validators/video.validator.ts'
+import type { ChannelSubscriberDataResponseObj, SubscribedChannelDataResponseObj } from '../types/aggregation.types.ts'
 
 
 
