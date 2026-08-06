@@ -44,3 +44,13 @@ export interface SubscribedChannelDataResponseObj extends BaseResponse {
     };
     createdAt: Date;
 }
+
+export interface VideoStatsAggregateResult {
+    _id: null;
+    totalVideos: number;
+    totalViews: number;
+}
+
+export interface ChannelVideoDataResponseObj extends BaseResponse, Omit<IVideo, '_id' | 'owner'> {
+    owner: string;
+}
